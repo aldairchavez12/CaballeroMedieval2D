@@ -21,11 +21,11 @@ public class Habilidad extends Consumible {
     @Override
     public void usar(Entidad usuario) {
         if (disponible()) {
-            System.out.println(usuario.getNombre() + " activa la habilidad " + nombre + ".");
+            System.out.println(usuario.getNombre() + " activa la habilidad " + getNombre() + ".");
             aplicarEfecto(usuario);
             consumir();
         } else {
-            System.out.println("No se puede usar la habilidad " + nombre + ".");
+            System.out.println("No se puede usar la habilidad " + getNombre() + ".");
         }
     }
 }
