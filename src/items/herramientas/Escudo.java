@@ -18,7 +18,7 @@ public class Escudo extends Herramienta {
 
     @Override
     public void usar(Entidad usuario) {
-        System.out.println(usuario.getNombre() + " bloquéa con el escudo " + nombre + ".");
+        System.out.println(usuario.getNombre() + " bloquéa con el escudo " + getNombre() + ".");
         reducirDurabilidad(1);
     }
 }
