@@ -10,24 +10,31 @@ package entidades;
  * @author JuLoq
  */
 
+import interfaces.Atacable;
+
 public class Boss extends Enemigo {
 
-    private int ataqueEspecial;
+    private int danioEspecial;
+    private int fase;
 
     public Boss(String nombre, int vida, int ataque,
-                int recompensa, int ataqueEspecial) {
+                int recompensa, int danioEspecial, int fase) {
 
         super(nombre, vida, ataque, recompensa);
-        this.ataqueEspecial = ataqueEspecial;
+
+        this.danioEspecial = danioEspecial;
+        this.fase = fase;
     }
 
     @Override
-    public void atacar() {
-        int danioTotal = ataque + ataqueEspecial;
+    public void atacar(Atacable objetivo) {
 
-        System.out.println(nombre +
-                " usa un ataque especial y causa "
-                + danioTotal + " de daño.");
+        int danioTotal = ataque + danioEspecial;
+
+        System.out.println(nombre
+                + " usa un ataque especial en fase "
+                + fase);
+
+        objetivo.recibirDanio(danioTotal);
     }
-
 }
