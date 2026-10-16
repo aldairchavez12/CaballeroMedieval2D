@@ -16,7 +16,7 @@ public class Flecha extends Item {
 
     @Override
     public void usar(Entidad usuario) {
-        System.out.println(usuario.getNombre() + " coloca una flecha " + nombre + ".");
+        System.out.println(usuario.getNombre() + " coloca una flecha " + getNombre() + ".");
     }
 
     public void impactar(Atacable objetivo) {
