@@ -15,11 +15,11 @@ public class Arco extends Herramienta {
 
     @Override
     public void usar(Entidad usuario) {
-        System.out.println(usuario.getNombre() + " apunta con el arco " + nombre + ".");
+        System.out.println(usuario.getNombre() + " apunta con el arco " + getNombre() + ".");
     }
 
     public void disparar(Atacable objetivo) {
-        System.out.println("Disparando con el arco " + nombre + ".");
+        System.out.println("Disparando con el arco " + getNombre() + ".");
         reducirDurabilidad(1);
     }
 }
