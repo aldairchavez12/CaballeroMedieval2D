@@ -14,12 +14,13 @@ package entidades;
 import interfaces.Atacable;
 
 public class Enemigo extends Entidad {
-
     protected int recompensa;
+    protected double velocidad; // Añadido según UML
 
-    public Enemigo(String nombre, int vida, int ataque, int recompensa) {
-        super(nombre, vida, ataque);
+    public Enemigo(String nombre, int vida, int ataqueBase, int recompensa, double velocidad) {
+        super(nombre, vida, ataqueBase); // Cambiado a ataqueBase
         this.recompensa = recompensa;
+        this.velocidad = velocidad;
     }
 
     @Override
@@ -27,13 +28,14 @@ public class Enemigo extends Entidad {
         System.out.println(nombre + " patrulla la zona.");
     }
 
-    public void atacar(Atacable objetivo) {
-        System.out.println(nombre + " ataca.");
-        objetivo.recibirDanio(ataque);
+    @Override
+    public void moverse() { // Añadido obligatoriamente por el UML
+        System.out.println(nombre + " se mueve a una velocidad de " + velocidad);
     }
 
-    public void recibirDanio(int danio) {
-        vida -= danio;
-        System.out.println(nombre + " recibe " + danio + " de daño.");
+    @Override
+    public void atacar(Atacable objetivo) {
+        System.out.println(nombre + " ataca.");
+        objetivo.recibirDanio(this.ataqueBase);
     }
 }
