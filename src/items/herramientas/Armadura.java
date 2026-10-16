@@ -18,6 +18,6 @@ public class Armadura extends Herramienta {
 
     @Override
     public void usar(Entidad usuario) {
-        System.out.println(usuario.getNombre() + " se equipa la armadura " + nombre + ".");
+        System.out.println(usuario.getNombre() + " se equipa la armadura " + getNombre() + ".");
     }
 }
