@@ -3,33 +3,37 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 
+
+
+/**
+ *
+ * @author JuLoq
+*/
 package entidades;
+
+import interfaces.Atacable;
 
 public class Enemigo extends Entidad {
 
     protected int recompensa;
 
     public Enemigo(String nombre, int vida, int ataque, int recompensa) {
-        this.nombre = nombre;
-        this.vida = vida;
-        this.ataque = ataque;
+        super(nombre, vida, ataque);
         this.recompensa = recompensa;
     }
 
-    public void moverse() {
-        System.out.println(nombre + " se mueve.");
+    @Override
+    public void update() {
+        System.out.println(nombre + " patrulla la zona.");
     }
 
-    public void atacar() {
-        System.out.println(nombre + " ataca con " + ataque + " de daño.");
+    public void atacar(Atacable objetivo) {
+        System.out.println(nombre + " ataca.");
+        objetivo.recibirDanio(ataque);
     }
 
     public void recibirDanio(int danio) {
         vida -= danio;
         System.out.println(nombre + " recibe " + danio + " de daño.");
     }
-    /**
-     *
-     * @author JuLoq
-    */
 }
