@@ -13,10 +13,10 @@ public class Comida extends Consumible {
     @Override
     public void usar(Entidad usuario) {
         if (disponible()) {
-            System.out.println(usuario.getNombre() + " consume " + nombre + " y recupera " + curacion + " puntos de vida.");
+            System.out.println(usuario.getNombre() + " consume " + getNombre() + " y recupera " + curacion + " puntos de vida.");
             consumir();
         } else {
-            System.out.println("No queda suficiente " + nombre + ".");
+            System.out.println("No queda suficiente " + getNombre() + ".");
         }
     }
 }
