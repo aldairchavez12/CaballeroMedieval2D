@@ -18,7 +18,7 @@ public class Pocima extends Consumible {
             System.out.println(usuario.getNombre() + " toma la pócima " + nombre + " (" + efecto + ") regenerando " + curacion + " HP.");
             consumir();
         } else {
-            System.out.println("La pócima " + nombre + " está agotada.");
+            System.out.println("La pócima " + getNombre() + " está agotada.");
         }
     }
 }
