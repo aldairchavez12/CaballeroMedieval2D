@@ -18,7 +18,7 @@ public class Espada extends Herramienta {
 
     @Override
     public void usar(Entidad usuario) {
-        System.out.println(usuario.getNombre() + " blande la espada " + nombre + " haciendo " + danio + " de daño.");
+        System.out.println(usuario.getNombre() + " blande la espada " + getNombre() + " haciendo " + danio + " de daño.");
         reducirDurabilidad(1);
     }
 }
