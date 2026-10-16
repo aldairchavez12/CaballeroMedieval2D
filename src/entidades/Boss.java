@@ -10,31 +10,34 @@ package entidades;
  * @author JuLoq
  */
 
+
 import interfaces.Atacable;
 
 public class Boss extends Enemigo {
-
     private int danioEspecial;
     private int fase;
 
-    public Boss(String nombre, int vida, int ataque,
-                int recompensa, int danioEspecial, int fase) {
-
-        super(nombre, vida, ataque, recompensa);
-
+    public Boss(String nombre, int vida, int ataqueBase, int recompensa, double velocidad, int danioEspecial, int fase) {
+        super(nombre, vida, ataqueBase, recompensa, velocidad); // Añadido velocidad
         this.danioEspecial = danioEspecial;
         this.fase = fase;
     }
 
     @Override
+    public void update() { // Añadido según UML
+        System.out.println(nombre + " (Boss) está ejecutando su lógica en fase " + fase);
+    }
+
+    @Override
     public void atacar(Atacable objetivo) {
+        // Lógica básica o derivación al ataque especial
+        super.atacar(objetivo);
+    }
 
-        int danioTotal = ataque + danioEspecial;
-
-        System.out.println(nombre
-                + " usa un ataque especial en fase "
-                + fase);
-
+    // Método explícito exigido por el diagrama UML
+    public void ataqueEspecial(Atacable objetivo) {
+        int danioTotal = this.ataqueBase + this.danioEspecial;
+        System.out.println(nombre + " usa un ataque especial letal en fase " + fase);
         objetivo.recibirDanio(danioTotal);
     }
 }
