@@ -1,6 +1,8 @@
 package escenario;
 
-public class Estructura {
+import interfaces.Atacable;
+
+public class Estructura implements Atacable {
 
     private int resistencia;
 
@@ -8,17 +10,21 @@ public class Estructura {
         this.resistencia = resistencia;
     }
 
+    @Override
     public void recibirDanio(int danio) {
 
         resistencia -= danio;
 
         System.out.println(
                 "La estructura recibe "
-                + danio + " de daño."
+                        + danio
+                        + " de daño."
         );
 
         if (resistencia <= 0) {
-            System.out.println("La estructura fue destruida.");
+            System.out.println(
+                    "La estructura fue destruida."
+            );
         }
     }
 }
