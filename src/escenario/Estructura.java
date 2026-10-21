@@ -9,7 +9,7 @@ public class Estructura implements Atacable {
 
     public Estructura(String nombre, int resistencia) {
         this.nombre = nombre;
-        this.resistencia = resistencia;
+        this.resistencia = Math.max(0, resistencia);
     }
 
     @Override
