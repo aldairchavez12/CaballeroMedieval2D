@@ -3,8 +3,9 @@ package items;
 import entidades.Entidad;
 
 public abstract class Item {
-    protected String nombre;
-    protected String descripcion;
+
+    private String nombre;
+    private String descripcion;
 
     public Item(String nombre, String descripcion) {
         this.nombre = nombre;

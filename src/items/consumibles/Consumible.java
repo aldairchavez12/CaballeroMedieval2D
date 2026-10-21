@@ -3,11 +3,12 @@ package items.consumibles;
 import items.Item;
 
 public abstract class Consumible extends Item {
+
     protected int cantidad;
 
     public Consumible(String nombre, String descripcion, int cantidad) {
         super(nombre, descripcion);
-        this.cantidad = cantidad;
+        this.cantidad = Math.max(0, cantidad);
     }
 
     public void consumir() {
