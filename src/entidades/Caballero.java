@@ -1,3 +1,7 @@
+package entidades;
+
+import interfaces.Atacable;
+import items.herramientas.Herramienta;
 class Caballero extends Entidad {
     private int experiencia;
     private Herramienta arma;
