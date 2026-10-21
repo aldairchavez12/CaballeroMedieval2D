@@ -25,17 +25,17 @@ public class Enemigo extends Entidad {
 
     @Override
     public void update() {
-        System.out.println(nombre + " patrulla la zona.");
+        System.out.println(getNombre() + " patrulla la zona.");
     }
 
     @Override
     public void moverse() { // Añadido obligatoriamente por el UML
-        System.out.println(nombre + " se mueve a una velocidad de " + velocidad);
+        System.out.println(getNombre() + " se mueve a una velocidad de " + velocidad);
     }
 
     @Override
     public void atacar(Atacable objetivo) {
-        System.out.println(nombre + " ataca.");
-        objetivo.recibirDanio(this.ataqueBase);
+        System.out.println(getNombre() + " ataca.");
+        objetivo.recibirDanio(this.getAtaqueBase());
     }
 }

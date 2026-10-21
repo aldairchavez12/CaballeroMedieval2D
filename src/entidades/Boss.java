@@ -25,7 +25,7 @@ public class Boss extends Enemigo {
 
     @Override
     public void update() { // Añadido según UML
-        System.out.println(nombre + " (Boss) está ejecutando su lógica en fase " + fase);
+        System.out.println(getNombre() + " (Boss) está ejecutando su lógica en fase " + fase);
     }
 
     @Override
@@ -36,8 +36,8 @@ public class Boss extends Enemigo {
 
     // Método explícito exigido por el diagrama UML
     public void ataqueEspecial(Atacable objetivo) {
-        int danioTotal = this.ataqueBase + this.danioEspecial;
-        System.out.println(nombre + " usa un ataque especial letal en fase " + fase);
+        int danioTotal = this.getAtaqueBase() + this.danioEspecial;
+        System.out.println(getNombre() + " usa un ataque especial letal en fase " + fase);
         objetivo.recibirDanio(danioTotal);
     }
 }
