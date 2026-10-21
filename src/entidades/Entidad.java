@@ -1,8 +1,9 @@
-public interface Atacable {
-    void recibirDanio(int danio);
-}
+package entidades;
 
-abstract class Entidad implements Atacable {
+import interfaces.Atacable;
+
+public abstract class Entidad implements Atacable {
+
     private String nombre;
     private int vida;
     private int ataqueBase;
@@ -14,17 +15,20 @@ abstract class Entidad implements Atacable {
     }
 
     public abstract void update();
+
     public abstract void moverse();
+
     public abstract void atacar(Atacable objetivo);
 
     @Override
     public void recibirDanio(int danio) {
-        this.vida -= danio;
-        System.out.println(this.nombre + " está recibiendo " + danio + " de daño. Vida restante: " + this.vida);
+        if (danio > 0) {
+            vida = Math.max(0, vida - danio);
+        }
     }
 
     public boolean estaVivo() {
-        return this.vida > 0;
+        return vida > 0;
     }
 
     public String getNombre() {
