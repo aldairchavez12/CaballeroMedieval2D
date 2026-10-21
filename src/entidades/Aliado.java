@@ -1,3 +1,7 @@
+package entidades;
+
+import interfaces.Atacable;
+
 class Aliado extends Entidad {
     private String tipoApoyo;
     private int poderApoyo;
