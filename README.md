@@ -29,7 +29,7 @@ La aventura se divide en tres capítulos secuenciales:
 | Capítulo | Escenario | Enemigo |
 |---|---|---|
 | I | Bosque de las Sombras | Goblin |
-| II | Fortaleza Abandonada | Guardian Oscuro |
+| II | Fortaleza Abandonada | Guardián Oscuro |
 | III | Trono de la Oscuridad | Señor de las Sombras (Boss) |
 
 Para avanzar al siguiente capítulo, el jugador debe derrotar al enemigo correspondiente.
