@@ -14,11 +14,18 @@ public class Pocima extends Consumible {
 
     @Override
     public void usar(Entidad usuario) {
-        if (disponible()) {
-            System.out.println(usuario.getNombre() + " toma la pócima " +  getNombre() + " (" + efecto + ") regenerando " + curacion + " HP.");
-            consumir();
-        } else {
-            System.out.println("La pócima " + getNombre() + " está agotada.");
+
+        if (!disponible() || usuario == null) {
+            return;
         }
+
+        usuario.curar(curacion);
+        consumir();
+
+        System.out.println(
+            usuario.getNombre()
+            + " utilizó " + getNombre()
+            + ". Vida actual: " + usuario.getVida()
+        );
     }
 }

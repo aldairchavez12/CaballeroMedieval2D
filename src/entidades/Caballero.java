@@ -1,7 +1,7 @@
 package entidades;
 
-import interfaces.Atacable;
-import items.herramientas.Herramienta;
+import interfaces.*;
+import items.herramientas.*;
 import juego.Juego;
 
 public class Caballero extends Entidad {
@@ -19,6 +19,8 @@ public class Caballero extends Entidad {
     public static final int ANCHO = 45;
     public static final int ALTO = 70;
 
+
+    private AtaqueStrategy estrategiaAtaque = new AtaqueStrategy.Basico();
     public Caballero(String nombre, int vida, int ataqueBase, int experiencia, Herramienta arma, Herramienta defensa) {
         super(nombre, vida, ataqueBase);
         this.experiencia = experiencia;
@@ -53,7 +55,12 @@ public class Caballero extends Entidad {
     public void establecerDireccion(int direccion) { this.direccion = Integer.compare(direccion, 0); }
     @Override
     public void atacar(Atacable objetivo) {
-        if (objetivo != null) objetivo.recibirDanio(getAtaqueBase());
+        if (objetivo != null) {
+            estrategiaAtaque.ejecutar(this, objetivo);
+        }
+    }
+    public int getAlcanceAtaque() {
+        return estrategiaAtaque.getAlcance();
     }
     public void saltar() {
         if (enSuelo) {
@@ -61,7 +68,29 @@ public class Caballero extends Entidad {
             enSuelo = false;
         }
     }
-    public void equiparArma(Herramienta arma) { this.arma = arma; }
+
+    public void equiparArma(Herramienta arma) {
+
+        this.arma = arma;
+
+        if (arma instanceof Espada) {
+
+            estrategiaAtaque = new AtaqueStrategy.ConEspada(
+                (Espada) arma
+            );
+
+        } else if (arma instanceof Arco) {
+
+            estrategiaAtaque = new AtaqueStrategy.ConArco(
+                (Arco) arma
+            );
+
+        } else {
+
+            estrategiaAtaque = new AtaqueStrategy.Basico();
+        }
+    }
+
     public void equiparDefensa(Herramienta defensa) { this.defensa = defensa; }
     public int getX() { return x; }
     public int getY() { return y; }

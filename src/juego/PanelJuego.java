@@ -1,29 +1,17 @@
 package juego;
 
-import entidades.Caballero;
-import entidades.Enemigo;
-import entidades.Boss;
+import entidades.*;
+import items.*;
+import items.consumibles.*;
+import items.herramientas.*;
 
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import javax.swing.Timer;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.geom.*;
+import java.util.List;
 import java.util.Random;
-
+import java.awt.geom.AffineTransform;
 /**
  * Presentacion y controles del juego. Conserva el contrato con Juego,
  * Caballero, Enemigo, Boss e interfaces del UML original.
@@ -31,10 +19,16 @@ import java.util.Random;
  */
 public class PanelJuego extends JPanel {
 
+    private static final int SLOTS_HOTBAR = 9;
+
+    private int slotSeleccionado = 0;
+    private boolean mirandoDerecha = true;
+
     private static final int ANCHO = 1280;
     private static final int ALTO = 720;
     private static final int SUELO_Y = 620;
     private static final int TOTAL_MONEDAS = 6;
+    private boolean inventarioAbierto = false;
 
     private final Juego juego;
     private final Timer gameLoop;
@@ -71,6 +65,26 @@ public class PanelJuego extends JPanel {
         vidaAnterior = juego.getCaballero().getVida();
         enemigoVidaAnterior = juego.getEnemigo() == null ? 0 : juego.getEnemigo().getVida();
 
+        juego.getCaballero().agregarObservador(evento -> {
+
+            int vidaAnterior = (int) evento.getOldValue();
+            int vidaActual = (int) evento.getNewValue();
+
+            if (vidaActual < vidaAnterior) {
+
+                efectoDanio = 14;
+
+            } else if (vidaActual > vidaAnterior) {
+
+                avisar(
+                    "VIDA RECUPERADA: +"
+                    + (vidaActual - vidaAnterior)
+                );
+            }
+
+            repaint();
+        });
+
         for (int i = 0; i < lluviaX.length; i++) {
             lluviaX[i] = efectos.nextInt(ANCHO);
             lluviaY[i] = efectos.nextInt(ALTO);
@@ -93,8 +107,34 @@ public class PanelJuego extends JPanel {
         input.put(KeyStroke.getKeyStroke("pressed J"), "atacar");
         input.put(KeyStroke.getKeyStroke("pressed E"), "interactuar");
         input.put(KeyStroke.getKeyStroke("pressed ENTER"), "continuar");
-        input.put(KeyStroke.getKeyStroke("pressed P"), "pausar");
+        input.put(KeyStroke.getKeyStroke("pressed ESC"), "pausar");
+        
+        input.put(KeyStroke.getKeyStroke("pressed X"), "eliminarItem");
 
+        acciones.put("eliminarItem", new AbstractAction() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                if (pausado || !juego.estaActivo()) {
+                    return;
+                }
+
+                List<Item> objetos = juego.getInventario()
+                        .obtenerItems();
+
+                if (slotSeleccionado >= objetos.size()) {
+                    return;
+                }
+
+                Item seleccionado = objetos.get(slotSeleccionado);
+
+                if (juego.getInventario().eliminarItem(seleccionado)) {
+                    avisar("ELIMINADO: " + seleccionado.getNombre());
+                    repaint();
+                }
+            }
+        });
         acciones.put("izquierdaOn", new AbstractAction() {
             @Override public void actionPerformed(ActionEvent e) { izquierda = true; }
         });
@@ -138,6 +178,102 @@ public class PanelJuego extends JPanel {
                 }
             }
         });
+        
+
+        // ============================================
+        // CONTROLES DEL INVENTARIO
+        // ============================================
+
+        for (int i = 1; i <= 9; i++) {
+
+            final int indice = i - 1;
+
+            input.put(
+                KeyStroke.getKeyStroke("pressed " + i),
+                "usarObjeto" + i
+            );
+
+            acciones.put("usarObjeto" + i, new AbstractAction() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    if (inventarioAbierto && !pausado) {
+
+                        if (juego.usarItem(indice)) {
+                            avisar("OBJETO UTILIZADO");
+                        }
+                    }
+                }
+            });
+        }
+    for (int i = 1; i <= SLOTS_HOTBAR; i++) {
+
+        final int indice = i - 1;
+
+        input.put(
+            KeyStroke.getKeyStroke("pressed " + i),
+            "seleccionarSlot" + i
+        );
+
+        acciones.put(
+            "seleccionarSlot" + i,
+            new AbstractAction() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    if (!pausado && juego.estaActivo()) {
+                        slotSeleccionado = indice;
+                        repaint();
+                    }
+                }
+            }
+        );
+    }
+    addMouseWheelListener(e -> {
+
+        if (pausado || !juego.estaActivo()) {
+            return;
+        }
+
+        int desplazamiento = e.getWheelRotation();
+
+        slotSeleccionado = Math.floorMod(
+            slotSeleccionado + desplazamiento,
+            SLOTS_HOTBAR
+        );
+
+        repaint();
+    });
+
+    addMouseListener(new MouseAdapter() {
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+
+            if (pausado || !juego.estaActivo()) {
+                return;
+            }
+
+            if (SwingUtilities.isLeftMouseButton(e)) {
+
+                if (juego.usarItem(slotSeleccionado)) {
+                    avisar("OBJETO UTILIZADO");
+                }
+
+            } else if (SwingUtilities.isRightMouseButton(e)) {
+
+                juego.atacarEnemigo();
+                efectoAtaque = 10;
+            }
+
+            repaint();
+        }
+
+    });
+
+
     }
 
     private void actualizarPantalla() {
@@ -155,7 +291,7 @@ public class PanelJuego extends JPanel {
             avisar("NUEVO CAPITULO: " + capituloVisual);
         }
 
-        if (!pausado && juego.estaActivo()) {
+        if (!pausado && !inventarioAbierto && juego.estaActivo()) {
             int direccion = (derecha ? 1 : 0) - (izquierda ? 1 : 0);
             juego.getCaballero().establecerDireccion(direccion);
             juego.actualizar();
@@ -179,6 +315,15 @@ public class PanelJuego extends JPanel {
         Enemigo enemigo = juego.getEnemigo();
         if (enemigo != null) enemigoVidaAnterior = enemigo.getVida();
         repaint();
+        int direccion = (derecha ? 1 : 0) - (izquierda ? 1 : 0);
+
+        if (direccion > 0) {
+            mirandoDerecha = true;
+        } else if (direccion < 0) {
+            mirandoDerecha = false;
+        }
+
+        juego.getCaballero().establecerDireccion(direccion);
     }
 
     private void avisar(String mensaje) {
@@ -207,11 +352,108 @@ public class PanelJuego extends JPanel {
         Rectangle jugador = new Rectangle(c.getX(), c.getY(), Caballero.ANCHO, Caballero.ALTO);
         Rectangle cofre = new Rectangle(2770, 556, 75, 54);
         if (jugador.intersects(new Rectangle(cofre.x - 35, cofre.y - 35, cofre.width + 70, cofre.height + 45))) {
-            cofreAbierto = true;
-            monedas += 5;
-            avisar("COFRE ABIERTO  +5 MONEDAS");
+           Pocima pocima = juego.crearPocimaVida();
+
+            if (juego.recogerItem(pocima)) {
+                cofreAbierto = true;
+                monedas += 5;
+                avisar("OBTUVISTE UNA POCIMA Y 5 MONEDAS");
+            } else {
+                avisar("INVENTARIO LLENO");
+            }
         }
     }
+
+    private void dibujarHotbar(Graphics2D g) {
+
+        int tamano = 58;
+        int separacion = 5;
+        int total = SLOTS_HOTBAR * (tamano + separacion)
+                - separacion;
+
+        int inicioX = (ANCHO - total) / 2;
+        int inicioY = ALTO - 92;
+
+        List<Item> objetos = juego.getInventario()
+                .obtenerItems();
+
+        g.setFont(new Font("SansSerif", Font.BOLD, 12));
+
+        for (int i = 0; i < SLOTS_HOTBAR; i++) {
+
+            int x = inicioX + i * (tamano + separacion);
+            int y = inicioY;
+
+            boolean seleccionado = i == slotSeleccionado;
+
+            g.setColor(new Color(22, 25, 36, 225));
+            g.fillRoundRect(x, y, tamano, tamano, 8, 8);
+
+            g.setStroke(new BasicStroke(seleccionado ? 3 : 1));
+
+            g.setColor(
+                seleccionado
+                    ? new Color(255, 210, 90)
+                    : new Color(135, 140, 155)
+            );
+
+            g.drawRoundRect(x, y, tamano, tamano, 8, 8);
+
+            g.setColor(Color.LIGHT_GRAY);
+            g.drawString(String.valueOf(i + 1), x + 5, y + 13);
+
+            if (i < objetos.size()) {
+
+                Item item = objetos.get(i);
+                String nombre = item.getNombre();
+
+                String icono = "?";
+
+                String tipo = item.getClass().getSimpleName();
+
+                switch (tipo) {
+                    case "Espada": icono = "E"; break;
+                    case "Arco": icono = "A"; break;
+                    case "Flecha": icono = "F"; break;
+                    case "Escudo": icono = "S"; break;
+                    case "Armadura": icono = "D"; break;
+                    case "Pocima": icono = "P"; break;
+                    case "Comida": icono = "C"; break;
+                    case "Habilidad": icono = "H"; break;
+                }
+
+                g.setColor(new Color(245, 216, 150));
+                g.setFont(new Font("SansSerif", Font.BOLD, 27));
+
+                FontMetrics fm = g.getFontMetrics();
+                g.drawString(
+                    icono,
+                    x + (tamano - fm.stringWidth(icono)) / 2,
+                    y + 39
+                );
+
+                g.setFont(new Font("SansSerif", Font.BOLD, 12));
+            }
+        }
+
+        g.setStroke(new BasicStroke(1));
+
+        if (slotSeleccionado < objetos.size()) {
+
+            Item seleccionado = objetos.get(slotSeleccionado);
+
+            String nombre = seleccionado.getNombre();
+
+            g.setFont(new Font("SansSerif", Font.BOLD, 15));
+            FontMetrics fm = g.getFontMetrics();
+
+            int textoX = (ANCHO - fm.stringWidth(nombre)) / 2;
+
+            g.setColor(new Color(255, 230, 165));
+            g.drawString(nombre, textoX, inicioY - 12);
+        }
+    }
+
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -226,10 +468,16 @@ public class PanelJuego extends JPanel {
         dibujarMonedas(mundo);
         dibujarCofre(mundo);
         dibujarMeta(mundo);
-        dibujarCaballero(mundo);
+        Graphics2D graficoCaballero = (Graphics2D) mundo.create();
+
+        dibujarCaballero(graficoCaballero);
+
+        graficoCaballero.dispose();
+
         dibujarEnemigo(mundo);
         mundo.dispose();
         dibujarHUD(g2);
+        dibujarHotbar(g2);
         dibujarNarrativa(g2);
         if (efectoDanio > 0) {
             g2.setColor(new Color(190, 20, 25, Math.min(75, efectoDanio * 4)));
@@ -237,6 +485,51 @@ public class PanelJuego extends JPanel {
         }
         if (pausado) dibujarPausa(g2);
         g2.dispose();
+       
+    }
+
+    private void dibujarInventario(Graphics2D g) {
+
+        g.setColor(new Color(10, 12, 25, 220));
+        g.fillRect(0, 0, ANCHO, ALTO);
+
+        g.setColor(new Color(35, 40, 60));
+        g.fillRoundRect(300, 130, 680, 450, 20, 20);
+
+        g.setColor(new Color(245, 205, 112));
+        g.setFont(new Font("SansSerif", Font.BOLD, 30));
+        g.drawString("INVENTARIO", 530, 185);
+
+        java.util.List<Item> objetos =
+                juego.getInventario().obtenerItems();
+
+        g.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        g.setColor(Color.WHITE);
+
+        if (objetos.isEmpty()) {
+            g.drawString("No tienes objetos", 350, 250);
+        }
+
+        for (int i = 0; i < objetos.size() && i < 9; i++) {
+
+            Item item = objetos.get(i);
+
+            g.drawString(
+                (i + 1) + ". " + item.getNombre(),
+                350,
+                240 + i * 30
+            );
+        }
+
+        g.setColor(new Color(245, 205, 112));
+        g.setFont(new Font("SansSerif", Font.BOLD, 16));
+
+        g.drawString(
+            "I: Cerrar | 1-9: Utilizar objeto",
+            350,
+            540
+        );
+        
     }
 
     private void dibujarFondo(Graphics2D g) {
@@ -370,6 +663,13 @@ public class PanelJuego extends JPanel {
         Caballero c = juego.getCaballero();
         if (!c.estaVivo()) return;
         int x = c.getX(), y = c.getY();
+        AffineTransform transformacionOriginal = g.getTransform();
+
+        if (!mirandoDerecha) {
+
+            g.translate(2 * x + Caballero.ANCHO, 0);
+            g.scale(-1, 1);
+        }
         // Sombra sobre el suelo
         g.setColor(new Color(15, 14, 26, 100));
         g.fillOval(x - 10, SUELO_Y - 9, 66, 12);
@@ -400,6 +700,7 @@ public class PanelJuego extends JPanel {
             g.setStroke(new BasicStroke(5));
             g.drawArc(x + 33, y - 15, 100, 104, -100, 115);
             g.setStroke(new BasicStroke(1));
+            g.setTransform(transformacionOriginal);
         }
     }
 

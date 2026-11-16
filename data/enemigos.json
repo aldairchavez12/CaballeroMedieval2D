@@ -1,0 +1,67 @@
+
+{
+  "enemigos": [
+    {
+      "id": "goblin_explorador",
+      "tipo": 1,
+      "clase": "Enemigo",
+      "nombre": "Goblin explorador",
+      "vida": 30,
+      "ataqueBase": 5,
+      "recompensa": 5,
+      "velocidad": 2.0
+    },
+    {
+      "id": "guardia_fortaleza",
+      "tipo": 2,
+      "clase": "Enemigo",
+      "nombre": "Guardia de la fortaleza",
+      "vida": 45,
+      "ataqueBase": 8,
+      "recompensa": 10,
+      "velocidad": 2.0
+    },
+    {
+      "id": "sombra_errante",
+      "tipo": 3,
+      "clase": "Enemigo",
+      "nombre": "Sombra errante",
+      "vida": 55,
+      "ataqueBase": 10,
+      "recompensa": 15,
+      "velocidad": 2.0
+    },
+    {
+      "id": "guardian_bosque",
+      "tipo": 4,
+      "clase": "Enemigo",
+      "nombre": "Guardian del bosque",
+      "vida": 75,
+      "ataqueBase": 10,
+      "recompensa": 25,
+      "velocidad": 2.0
+    },
+    {
+      "id": "capitan_oscuro",
+      "tipo": 5,
+      "clase": "Enemigo",
+      "nombre": "Capitan oscuro",
+      "vida": 95,
+      "ataqueBase": 12,
+      "recompensa": 25,
+      "velocidad": 2.0
+    },
+    {
+      "id": "senor_sombras",
+      "tipo": 6,
+      "clase": "Boss",
+      "nombre": "Senor de las Sombras",
+      "vida": 120,
+      "ataqueBase": 16,
+      "recompensa": 100,
+      "velocidad": 2.0,
+      "danioEspecial": 14,
+      "fase": 1
+    }
+  ]
+}

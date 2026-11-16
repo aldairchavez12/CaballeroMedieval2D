@@ -12,6 +12,9 @@ public class Arco extends Herramienta {
         this.danioBase = danioBase;
         this.alcance = alcance;
     }
+    public int getDanioBase() {
+      return danioBase;
+}
 
     @Override
     public void usar(Entidad usuario) {
