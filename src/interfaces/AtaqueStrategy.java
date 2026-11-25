@@ -11,18 +11,28 @@ public interface AtaqueStrategy {
 
     int getAlcance();
 
+    
     class Basico implements AtaqueStrategy {
 
+        private static final int DANIO_PUNOS = 5;
+        private static final int ALCANCE_PUNOS = 45;
+
         @Override
-        public void ejecutar(Caballero c, Atacable objetivo) {
-            objetivo.recibirDanio(c.getAtaqueBase());
+        public void ejecutar(Caballero caballero, Atacable objetivo) {
+
+            if (objetivo == null) {
+                return;
+            }
+
+            objetivo.recibirDanio(DANIO_PUNOS);
         }
 
         @Override
         public int getAlcance() {
-            return 90;
+            return ALCANCE_PUNOS;
         }
     }
+
 
     class ConEspada implements AtaqueStrategy {
 

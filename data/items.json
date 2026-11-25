@@ -6,8 +6,9 @@
       "tipo": "Espada",
       "nombre": "Espada de hierro",
       "descripcion": "Espada inicial del caballero",
-      "danio": 15,
-      "durabilidad": 100
+      "danio": 50,
+      "durabilidad": 100,
+      "alcance": 90.0
     },
     {
       "id": "arco_basico",
@@ -15,7 +16,8 @@
       "nombre": "Arco de madera",
       "descripcion": "Arco para ataques a distancia",
       "danio": 10,
-      "durabilidad": 80
+      "durabilidad": 80,
+      "alcance": 280.0
     },
     {
       "id": "flecha_basica",

@@ -13,17 +13,7 @@ import java.util.*;
 /** Control de partida: mismo contrato publico original, con recorrido lateral. */
 public class Juego {
 
-    private final JsonObject datosEnemigos =
-            leerJson("enemigos.json");
-
-    private final JsonObject datosNiveles =
-            leerJson("niveles.json");
-
-    private final JsonObject datosHistoria =
-            leerJson("historia.json");
-
-    private final JsonObject datosItems =
-            leerJson("items.json");
+    private final DatosJuego datos = new DatosJuego();
     public static final int ANCHO_NIVEL = 4800;
     public static final int META_X = 4670;
     public enum Estado { INTRO, JUGANDO, ENTRE_CAPITULOS, VICTORIA, DERROTA }
@@ -34,7 +24,7 @@ public class Juego {
         return instancia;
     }
     private final Inventario inventario = new Inventario(12);
-    
+    private final GestorProyectiles gestorProyectiles = new GestorProyectiles();
     private final List<Entidad> entidades;
     private final List<Estructura> estructuras;
     private final Caballero caballero;
@@ -56,31 +46,8 @@ public class Juego {
     private long ultimoAtaqueCaballero;
     private long ultimoAtaqueEnemigo;
     private int golpesEnemigo;
-
-    private static JsonObject leerJson(String archivo) {
-
-        Path ruta = Paths.get("data", archivo);
-
-        try (Reader lector = Files.newBufferedReader(ruta)) {
-
-            JsonObject datos = JsonParser
-                    .parseReader(lector)
-                    .getAsJsonObject();
-
-            System.out.println(
-                    "JSON cargado: " + archivo
-            );
-
-            return datos;
-
-        } catch (IOException | RuntimeException e) {
-
-            throw new IllegalStateException(
-                    "Error leyendo " + ruta.toAbsolutePath(),
-                    e
-            );
-        }
-    }
+    private final CreadorItems creadorItems = new CreadorItems(datos);
+   
 
 
 
@@ -89,9 +56,29 @@ public class Juego {
         estructuras = new ArrayList<>();
         caballero = new Caballero("Caballero de Valdoria", 100, 15, 0, null, null);
         entidades.add(caballero);
+        inventario.agregarItem(
+            creadorItems.crearArma("espada_basica")
+        );
+
+        inventario.agregarItem(
+            creadorItems.crearArma("arco_basico")
+        );
         capitulo = 1;
         estado = Estado.INTRO;
         prepararCapitulo();
+        String[] objetosIniciales = {
+            "espada_basica",
+            "arco_basico",
+            "escudo_basico",
+            "armadura_basica",
+            "comida_manzana",
+            "pocima_vida",
+            "flecha_basica"
+        };
+
+        for (String id : objetosIniciales) {
+            inventario.agregarItem(creadorItems.crear(id));
+        }
     }
 
     public void iniciar() {
@@ -100,51 +87,54 @@ public class Juego {
     }
 
 
+    public void reiniciarCapitulo() {
+
+        if (estado != Estado.DERROTA) {
+            return;
+        }
+
+        // Recuperar toda la vida del caballero
+        caballero.restaurarVida();
+
+        // Volver a cargar enemigos y posiciones
+        prepararCapitulo();
+
+        // Reiniciar el estado de la partida
+        estado = Estado.JUGANDO;
+
+        System.out.println(
+            "Capitulo " + capitulo + " reiniciado."
+        );
+    }
+
+   
     private Enemigo crearEnemigo(int tipo) {
 
-        JsonArray lista = datosEnemigos
-                .getAsJsonArray("enemigos");
+        JsonObject configuracion = datos.obtenerEnemigo(tipo);
 
-        if (lista == null) {
-            throw new IllegalStateException(
-                "Falta el arreglo enemigos en enemigos.json"
-            );
+        String clase = configuracion
+                .get("clase")
+                .getAsString();
+
+        CreadorEnemigo creador;
+
+        switch (clase) {
+
+            case "Enemigo":
+                creador = new CreadorEnemigo.CreadorNormal();
+                break;
+
+            case "Boss":
+                creador = new CreadorEnemigo.CreadorJefe();
+                break;
+
+            default:
+                throw new IllegalArgumentException(
+                    "Clase desconocida: " + clase
+                );
         }
 
-        for (JsonElement elemento : lista) {
-
-            JsonObject datos = elemento.getAsJsonObject();
-
-            if (datos.get("tipo").getAsInt() != tipo) {
-                continue;
-            }
-
-            CreadorEnemigo creador;
-
-            String clase = datos.get("clase").getAsString();
-
-            switch (clase) {
-
-                case "Enemigo":
-                    creador = new CreadorEnemigo.CreadorNormal();
-                    break;
-
-                case "Boss":
-                    creador = new CreadorEnemigo.CreadorJefe();
-                    break;
-
-                default:
-                    throw new IllegalArgumentException(
-                        "Clase desconocida: " + clase
-                    );
-            }
-
-            return creador.crear(datos);
-        }
-
-        throw new IllegalArgumentException(
-            "Enemigo no encontrado: " + tipo
-        );
+        return creador.crear(configuracion);
     }
 
     private void agregarEnemigo(int tipo, int x) {
@@ -156,6 +146,7 @@ public class Juego {
 
 
     private void prepararCapitulo() {
+        gestorProyectiles.limpiar();
 
         entidades.removeIf(e -> e instanceof Enemigo);
 
@@ -165,26 +156,8 @@ public class Juego {
 
         caballero.reiniciarPosicion();
 
-        JsonArray capitulos = datosNiveles
-                .getAsJsonArray("capitulos");
+        JsonObject nivel = datos.obtenerNivel(capitulo);
 
-        JsonObject nivel = null;
-
-        for (JsonElement elemento : capitulos) {
-
-            JsonObject actual = elemento.getAsJsonObject();
-
-            if (actual.get("id").getAsInt() == capitulo) {
-                nivel = actual;
-                break;
-            }
-        }
-
-        if (nivel == null) {
-            throw new IllegalArgumentException(
-                    "Capitulo no encontrado: " + capitulo
-            );
-        }
 
         JsonArray enemigosNivel =
                 nivel.getAsJsonArray("enemigos");
@@ -217,24 +190,7 @@ public class Juego {
                 + enemigos.size()
         );
     }
-    private JsonObject obtenerHistoriaCapitulo() {
-
-        JsonArray capitulos = datosHistoria
-                .getAsJsonArray("capitulos");
-
-        for (JsonElement elemento : capitulos) {
-
-            JsonObject datos = elemento.getAsJsonObject();
-
-            if (datos.get("id").getAsInt() == capitulo) {
-                return datos;
-            }
-        }
-
-        throw new IllegalArgumentException(
-                "Historia no encontrada: " + capitulo
-        );
-    }
+    
 
     public Inventario getInventario() {
         return inventario;
@@ -244,6 +200,7 @@ public class Juego {
         return inventario.agregarItem(item);
     }
 
+   
     public boolean usarItem(int indice) {
 
         if (estado != Estado.JUGANDO) {
@@ -258,20 +215,67 @@ public class Juego {
 
         Item item = objetos.get(indice);
 
-        if (item instanceof Consumible
-                && !((Consumible) item).disponible()) {
+        // Equipamiento: activar Strategy
+        if (item instanceof Espada || item instanceof Arco) {
+
+            caballero.equiparArma((Herramienta) item);
+
+            System.out.println(
+                "Arma equipada: " + item.getNombre()
+            );
+
+            return true;
+        }
+
+        // Consumibles
+        if (item instanceof Consumible) {
+
+            Consumible consumible = (Consumible) item;
+
+            if (!consumible.disponible()) {
+                return false;
+            }
+
+            item.usar(caballero);
+
+            if (!consumible.disponible()) {
+                inventario.eliminarItem(item);
+            }
+
+            return true;
+        }
+
+        if (item instanceof Espada || item instanceof Arco) {
+
+            caballero.equiparArma((Herramienta) item);
+            return true;
+        }
+
+        if (item instanceof Armadura) {
+
+            caballero.equiparArmadura((Armadura) item);
+            return true;
+        }
+
+        if (item instanceof Escudo) {
+
+            caballero.equiparEscudo((Escudo) item);
+            return true;
+        }
+
+        if (item instanceof Flecha) {
+
+            // Todavía no se consume: se utilizará
+            // mediante el sistema de proyectiles.
             return false;
         }
 
+        // Otros objetos conservan su comportamiento actual
         item.usar(caballero);
-
-        if (item instanceof Consumible
-                && !((Consumible) item).disponible()) {
-            inventario.eliminarItem(item);
-        }
 
         return true;
     }
+
     public void continuarHistoria() {
         if (estado == Estado.INTRO) {
             estado = Estado.JUGANDO;
@@ -302,6 +306,65 @@ public class Juego {
             estado = capitulo == 3 ? Estado.VICTORIA : Estado.ENTRE_CAPITULOS;
             System.out.println(capitulo == 3 ? "Victoria: Valdoria ha sido liberada." : "Capitulo completado: " + capitulo);
         }
+        gestorProyectiles.actualizar(
+            enemigos,
+            posicionesEnemigos,
+            ENEMIGO_Y
+        );
+    }
+
+    private boolean dispararArco(Arco arco) {
+
+        if (arco.getDurabilidad() <= 0) {
+            return false;
+        }
+
+        Flecha municion = null;
+
+        for (Item item : inventario.obtenerItems()) {
+
+            if (item instanceof Flecha) {
+
+                Flecha flecha = (Flecha) item;
+
+                if (flecha.getCantidad() > 0) {
+                    municion = flecha;
+                    break;
+                }
+            }
+        }
+
+        if (municion == null) {
+            System.out.println("No quedan flechas");
+            return false;
+        }
+
+        if (!municion.consumirUna()) {
+            return false;
+        }
+
+        int direccion = caballero.miraDerecha() ? 1 : -1;
+
+        double origenX = caballero.getX()
+                + (direccion > 0 ? Caballero.ANCHO + 10 : -10);
+
+        double origenY = caballero.getY() + 35;
+
+        gestorProyectiles.disparar(
+            origenX,
+            origenY,
+            direccion,
+            caballero.getAlcanceAtaque(),
+            municion
+        );
+
+        arco.reducirDurabilidad(1);
+
+        if (municion.getCantidad() == 0) {
+            inventario.eliminarItem(municion);
+        }
+
+        return true;
     }
 
     private void actualizarIAEnemigo(Enemigo e) {
@@ -330,34 +393,8 @@ public class Juego {
         }
     }
 
-    private JsonObject buscarItem(String id) {
-
-        String[] categorias = {
-            "herramientas",
-            "consumibles"
-        };
-
-        for (String categoria : categorias) {
-
-            JsonArray lista = datosItems.getAsJsonArray(categoria);
-
-            if (lista == null) {
-                continue;
-            }
-
-            for (JsonElement elemento : lista) {
-
-                JsonObject item = elemento.getAsJsonObject();
-
-                if (item.get("id").getAsString().equals(id)) {
-                    return item;
-                }
-            }
-        }
-
-        throw new IllegalArgumentException(
-            "Item no encontrado: " + id
-        );
+    public GestorProyectiles getGestorProyectiles() {
+     return gestorProyectiles;
     }
 
 
@@ -368,15 +405,42 @@ public class Juego {
         int centroCaballero = caballero.getX() + Caballero.ANCHO / 2;
         Enemigo objetivo = null;
         int distanciaMin = Integer.MAX_VALUE;
+
+        Herramienta arma = caballero.getArmaEquipada();
+
+        if (arma instanceof Arco) {
+
+            if (dispararArco((Arco) arma)) {
+                ultimoAtaqueCaballero = ahora;
+            }
+
+            return;
+        }
+
+        if (arma != null && arma.getDurabilidad() <= 0) {
+            caballero.equiparArma(null);
+        }
+
         for (Enemigo e : enemigos) {
             if (!e.estaVivo()) continue;
             int centro = posicionesEnemigos.get(e) + ANCHO_ENEMIGO / 2;
             int distancia = Math.abs(centroCaballero - centro);
+            int diferenciaX = centro - centroCaballero;
+
+            boolean delante =
+                caballero.miraDerecha()
+                    ? diferenciaX >= 0
+                    : diferenciaX <= 0;
+
+            if (!delante) {
+                continue;
+            }
             if (distancia <= caballero.getAlcanceAtaque() && Math.abs(caballero.getY() - ENEMIGO_Y) < 60 && distancia < distanciaMin) {
                 objetivo = e;
                 distanciaMin = distancia;
             }
         }
+        
         if (objetivo == null) return;
         caballero.atacar(objetivo);
         ultimoAtaqueCaballero = ahora;
@@ -386,32 +450,21 @@ public class Juego {
     }
 
     public String getTituloCapitulo() {
-
-        JsonArray capitulos = datosNiveles
-                .getAsJsonArray("capitulos");
-
-        for (JsonElement elemento : capitulos) {
-
-            JsonObject nivel = elemento.getAsJsonObject();
-
-            if (nivel.get("id").getAsInt() == capitulo) {
-                return nivel.get("titulo").getAsString();
-            }
-        }
-
-        return "";
+        return datos.obtenerNivel(capitulo)
+            .get("titulo")
+            .getAsString();
     }
 
+    
     public String getMensajeHistoria() {
 
         if (estado == Estado.VICTORIA) {
-            return obtenerHistoriaCapitulo()
+            return datos.obtenerHistoria(capitulo)
                     .get("final").getAsString();
         }
 
         if (estado == Estado.DERROTA) {
-            return datosHistoria
-                    .get("derrota").getAsString();
+            return datos.obtenerMensajeDerrota();
         }
 
         if (estado == Estado.ENTRE_CAPITULOS) {
@@ -419,22 +472,22 @@ public class Juego {
         }
 
         if (estado == Estado.INTRO) {
-            return obtenerHistoriaCapitulo()
+            return datos.obtenerHistoria(capitulo)
                     .get("inicio").getAsString();
         }
 
         return "";
     }
+
     public Pocima crearPocimaVida() {
 
-        JsonObject datos = buscarItem("pocima_vida");
-
+        JsonObject configuracion = datos.obtenerItem("pocima_vida");
         return new Pocima(
-            datos.get("nombre").getAsString(),
-            datos.get("descripcion").getAsString(),
-            datos.get("cantidad").getAsInt(),
-            datos.get("curacion").getAsInt(),
-            datos.get("efecto").getAsString()
+            configuracion.get("nombre").getAsString(),
+            configuracion.get("descripcion").getAsString(),
+            configuracion.get("cantidad").getAsInt(),
+            configuracion.get("curacion").getAsInt(),
+            configuracion.get("efecto").getAsString()
         );
     }
 

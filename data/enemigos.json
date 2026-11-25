@@ -7,9 +7,9 @@
       "clase": "Enemigo",
       "nombre": "Goblin explorador",
       "vida": 30,
-      "ataqueBase": 5,
+      "ataqueBase": 15,
       "recompensa": 5,
-      "velocidad": 2.0
+      "velocidad": 10.0
     },
     {
       "id": "guardia_fortaleza",
@@ -56,7 +56,7 @@
       "tipo": 6,
       "clase": "Boss",
       "nombre": "Senor de las Sombras",
-      "vida": 120,
+      "vida": 100000000000000,
       "ataqueBase": 16,
       "recompensa": 100,
       "velocidad": 2.0,

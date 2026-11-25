@@ -8,12 +8,14 @@ public abstract class Entidad implements Atacable {
 
     private String nombre;
     private int vida;
+    private final int vidaMaxima;
     private int ataqueBase;
     private final PropertyChangeSupport observadores =
         new PropertyChangeSupport(this);
     public Entidad(String nombre, int vida, int ataqueBase) {
         this.nombre = nombre;
         this.vida = vida;
+        this.vidaMaxima = vida;
         this.ataqueBase = ataqueBase;
     }
     public void agregarObservador(PropertyChangeListener observador) {
@@ -22,6 +24,21 @@ public abstract class Entidad implements Atacable {
 
     public void quitarObservador(PropertyChangeListener observador) {
         observadores.removePropertyChangeListener("vida", observador);
+    }
+
+    public int getVidaMaxima() {
+        return vidaMaxima;
+    }
+
+    public void restaurarVida() {
+        int anterior = vida;
+        vida = vidaMaxima;
+
+        observadores.firePropertyChange(
+            "vida",
+            anterior,
+            vida
+        );
     }
 
     public abstract void update();
@@ -38,7 +55,7 @@ public abstract class Entidad implements Atacable {
 
         int vidaAnterior = vida;
 
-        vida = Math.min(100, vida + cantidad);
+        vida = Math.min(vidaMaxima, vida + cantidad);
 
         observadores.firePropertyChange(
             "vida",
