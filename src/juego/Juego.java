@@ -263,11 +263,21 @@ public class Juego {
             System.out.println("El Caballero ha sido derrotado.");
             return;
         }
-        boolean todosDerrotados = true;
-        if (todosDerrotados && caballero.getX() >= META_X - 60) {
-            estado = capitulo == 3 ? Estado.VICTORIA : Estado.ENTRE_CAPITULOS;
-            System.out.println(capitulo == 3 ? "Victoria: Valdoria ha sido liberada." : "Capitulo completado: " + capitulo);
+        
+        if (enemigosDerrotados()
+                && caballero.getX() >= META_X - 60) {
+
+            estado = capitulo == 3
+                    ? Estado.VICTORIA
+                    : Estado.ENTRE_CAPITULOS;
+
+            System.out.println(
+                capitulo == 3
+                    ? "Victoria: Valdoria ha sido liberada."
+                    : "Capitulo completado: " + capitulo
+            );
         }
+
         gestorProyectiles.actualizar(
             enemigos,
             posicionesEnemigos,
