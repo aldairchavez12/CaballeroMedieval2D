@@ -83,6 +83,7 @@ public class Juego {
 
         // Recuperar toda la vida del caballero
         caballero.restaurarVida();
+        caballero.reiniciarMonedas();
 
         // Volver a cargar enemigos y posiciones
         prepararCapitulo();
@@ -147,6 +148,52 @@ public class Juego {
         return creadorItems.crear(id);
     }
 
+    public static final int COSTO_CURACION = 5;
+    public static final int PUNTOS_CURACION = 40;
+
+    public enum ResultadoCompra {
+
+        EXITOSA,
+        SALDO_INSUFICIENTE,
+        VIDA_COMPLETA,
+        NO_DISPONIBLE
+    }
+
+    public ResultadoCompra comprarCuracion() {
+
+        if (!estaActivo() || !caballero.estaVivo()) {
+
+            return ResultadoCompra.NO_DISPONIBLE;
+        }
+
+        if (caballero.getVida()
+                >= caballero.getVidaMaxima()) {
+
+            return ResultadoCompra.VIDA_COMPLETA;
+        }
+
+        if (!caballero.gastarMonedas(COSTO_CURACION)) {
+
+            return ResultadoCompra.SALDO_INSUFICIENTE;
+        }
+
+        caballero.curar(PUNTOS_CURACION);
+
+        return ResultadoCompra.EXITOSA;
+    }
+
+    public void recogerMonedas(int cantidad) {
+
+        if (estaActivo() && caballero.estaVivo()) {
+
+            caballero.agregarMonedas(cantidad);
+        }
+    }
+
+    public int getMonedas() {
+        return caballero.getMonedas();
+    }
+
     public Inventario getInventario() {
         return caballero.getInventario();
     }
@@ -163,82 +210,7 @@ public class Juego {
             return false;
         }
 
-        List<Item> objetos = caballero.getInventario().obtenerItems();
-
-        if (indice < 0 || indice >= objetos.size()) {
-            return false;
-        }
-
-        Item item = objetos.get(indice);
-
-        // Equipar espada o arco
-        if (item instanceof Espada || item instanceof Arco) {
-
-            Herramienta arma = (Herramienta) item;
-
-            if (arma.getDurabilidad() <= 0) {
-                return false;
-            }
-
-            caballero.equiparArma(arma);
-
-            System.out.println("Arma equipada: " + item.getNombre());
-            return true;
-        }
-
-        // Equipar armadura
-        if (item instanceof Armadura) {
-
-            Armadura armadura = (Armadura) item;
-
-            if (armadura.getDurabilidad() <= 0) {
-                return false;
-            }
-
-            caballero.equiparArmadura(armadura);
-            System.out.println("Armadura equipada");
-            return true;
-        }
-
-        // Equipar escudo
-        if (item instanceof Escudo) {
-
-            Escudo escudo = (Escudo) item;
-
-            if (escudo.getDurabilidad() <= 0) {
-                return false;
-            }
-
-            caballero.equiparEscudo(escudo);
-            System.out.println("Escudo equipado");
-            return true;
-        }
-
-        // Las flechas se utilizan al disparar el arco
-        if (item instanceof Flecha) {
-            return false;
-        }
-
-        // Utilizar consumibles
-        if (item instanceof Consumible) {
-
-            Consumible consumible = (Consumible) item;
-
-            if (!consumible.disponible()) {
-                return false;
-            }
-
-            item.usar(caballero);
-
-            if (!consumible.disponible()) {
-                caballero.getInventario().eliminarItem(item);
-            }
-
-            return true;
-        }
-
-        item.usar(caballero);
-        return true;
+        return caballero.usarObjeto(indice);
     }
 
 

@@ -2,6 +2,9 @@ package entidades;
 
 import interfaces.*;
 import items.Inventario;
+import items.Item;
+import items.consumibles.Consumible;
+import java.util.List;
 import items.herramientas.*;
 import juego.Juego;
 
@@ -9,6 +12,7 @@ public class Caballero extends Entidad {
     private int bonoAtaque = 0;
     private int duracionHabilidad = 0;
     private int experiencia;
+    private int monedas = 0;
     private Herramienta arma;
     private Herramienta defensa;
     private int x;
@@ -47,7 +51,7 @@ public class Caballero extends Entidad {
         }
 
         bonoAtaque = poder;
-        duracionHabilidad = duracion;
+        duracionHabilidad = (int) Math.ceil(duracion * 1000.0 / 16.0);
 
         System.out.println(
             "Furia activada: +" + poder + " de ataque"
@@ -208,6 +212,131 @@ public class Caballero extends Entidad {
         super.recibirDanio(restante);
         
     }
+    public boolean eliminarObjeto(Item item) {
+
+        if (!inventario.eliminarItem(item)) {
+            return false;
+        }
+
+        if (item == arma) {
+            equiparArma(null);
+        }
+
+        if (item == armaduraEquipada) {
+            equiparArmadura(null);
+        }
+
+        if (item == escudoEquipado) {
+            equiparEscudo(null);
+        }
+
+        if (item == defensa) {
+            equiparDefensa(null);
+        }
+
+        return true;
+    }
+
+    public boolean usarObjeto(int indice) {
+
+        List<Item> objetos = inventario.obtenerItems();
+
+        if (indice < 0 || indice >= objetos.size()
+                || !estaVivo()) {
+            return false;
+        }
+
+        Item item = objetos.get(indice);
+
+        if (item instanceof Herramienta) {
+
+            Herramienta herramienta = (Herramienta) item;
+
+            if (herramienta.getDurabilidad() <= 0) {
+                return false;
+            }
+
+            if (item instanceof Espada
+                    || item instanceof Arco) {
+
+                equiparArma(herramienta);
+
+            } else if (item instanceof Armadura) {
+
+                equiparArmadura((Armadura) item);
+
+            } else if (item instanceof Escudo) {
+
+                equiparEscudo((Escudo) item);
+
+            } else {
+
+                return false;
+            }
+
+            return true;
+        }
+
+        if (item instanceof Flecha) {
+            return false;
+        }
+
+        if (item instanceof Consumible) {
+
+            Consumible consumible = (Consumible) item;
+
+            if (!consumible.disponible()) {
+                return false;
+            }
+
+            int cantidadAnterior = consumible.getCantidad();
+
+            item.usar(this);
+
+            if (consumible.getCantidad() == cantidadAnterior) {
+                return false;
+            }
+
+            if (!consumible.disponible()) {
+                eliminarObjeto(item);
+            }
+
+            return true;
+        }
+
+        item.usar(this);
+        return true;
+    }
+
+    public int getMonedas() {
+        return monedas;
+    }
+
+    public void agregarMonedas(int cantidad) {
+
+        if (cantidad > 0) {
+
+            monedas = (int) Math.min(
+                Integer.MAX_VALUE,
+                (long) monedas + cantidad
+            );
+        }
+    }
+
+    public boolean gastarMonedas(int cantidad) {
+
+        if (cantidad <= 0 || cantidad > monedas) {
+            return false;
+        }
+
+        monedas -= cantidad;
+        return true;
+    }
+
+    public void reiniciarMonedas() {
+        monedas = 0;
+    }
+
     public Inventario getInventario() {
         return inventario;
     }
