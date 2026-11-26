@@ -23,7 +23,7 @@ public class Habilidad extends Consumible {
     public void aplicarEfecto(Entidad usuario) {
 
         if (usuario instanceof Caballero
-                && "Furia".equalsIgnoreCase(tipoEfecto)) {
+                && "Aumento de ataque".equalsIgnoreCase(tipoEfecto)) {
 
             Caballero caballero = (Caballero) usuario;
 
@@ -40,7 +40,7 @@ public class Habilidad extends Consumible {
         }
 
         if (usuario instanceof Caballero
-                && "Furia".equalsIgnoreCase(tipoEfecto)) {
+                && "Aumento de ataque".equalsIgnoreCase(tipoEfecto)) {
 
             aplicarEfecto(usuario);
             consumir();

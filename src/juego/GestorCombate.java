@@ -1,26 +1,24 @@
-
 package juego;
 
-import entidades.*;
+import entidades.Caballero;
+import entidades.Enemigo;
 import escenario.Estructura;
-import items.*;
-import items.herramientas.*;
+import interfaces.Atacable;
+import items.Inventario;
+
 import java.util.*;
 
 public class GestorCombate {
 
     private static final long COOLDOWN_CABALLERO =
-            350_000_000L;
+        350_000_000L;
 
-    private static final int ANCHO_ENEMIGO = 45;
     private static final int ENEMIGO_Y = 550;
 
     private long ultimoAtaqueCaballero;
 
     private final Caballero caballero;
-    private final Inventario inventario;
     private final GestorProyectiles proyectiles;
-
     private final List<Enemigo> enemigos;
     private final Map<Enemigo, Integer> posiciones;
 
@@ -32,7 +30,6 @@ public class GestorCombate {
             Map<Enemigo, Integer> posiciones) {
 
         this.caballero = caballero;
-        this.inventario = inventario;
         this.proyectiles = proyectiles;
         this.enemigos = enemigos;
         this.posiciones = posiciones;
@@ -44,9 +41,7 @@ public class GestorCombate {
 
     public Enemigo atacar(List<Estructura> estructuras) {
 
-        if (!caballero.estaVivo()) {
-            return null;
-        }
+        if (!caballero.estaVivo()) return null;
 
         long ahora = System.nanoTime();
 
@@ -55,119 +50,70 @@ public class GestorCombate {
             return null;
         }
 
-        Herramienta arma = caballero.getArmaEquipada();
+        caballero.verificarArma();
 
-        // Ataque a distancia
-        if (arma instanceof Arco) {
+        Atacable objetivo = null;
 
-            if (dispararArco((Arco) arma)) {
-                ultimoAtaqueCaballero = ahora;
-            }
+        if (!caballero.usaAtaqueDistancia()) {
 
-            return null;
+            objetivo = buscarObjetivo(estructuras);
+
+            if (objetivo == null) return null;
         }
 
-        // Arma desgastada: regresar a ataque basico
-        if (arma != null && arma.getDurabilidad() <= 0) {
-            caballero.equiparArma(null);
-        }
+        boolean ejecutado = caballero.ejecutarAtaque(
+            objetivo,
+            proyectiles
+        );
 
-        Enemigo objetivo = buscarObjetivo();
-
-        if (objetivo == null) {
-
-            for (Estructura estructura : estructuras) {
-
-                if (estructura.estaDestruida()) {
-                    continue;
-                }
-
-                int diferencia =
-                    estructura.getX() + 22
-                    - caballero.getX()
-                    - Caballero.ANCHO / 2;
-
-                boolean delante = caballero.miraDerecha()
-                    ? diferencia >= 0
-                    : diferencia <= 0;
-
-                boolean alturaCompatible =
-                    Math.abs(caballero.getY()
-                    - estructura.getY()) < 60;
-
-                if (delante && alturaCompatible
-                        && Math.abs(diferencia)
-                        <= caballero.getAlcanceAtaque()) {
-
-                    caballero.atacar(estructura);
-
-                    ultimoAtaqueCaballero = ahora;
-
-                    return null;
-                }
-            }
-        }
-
-        if (objetivo == null) {
-            return null;
-        }
-
-        // Se conserva el patron Strategy
-        caballero.atacar(objetivo);
+        if (!ejecutado) return null;
 
         ultimoAtaqueCaballero = ahora;
 
-        System.out.println(
-            objetivo.getNombre()
-            + " - Vida: "
-            + objetivo.getVida()
-        );
+        if (objetivo instanceof Enemigo) {
+            return (Enemigo) objetivo;
+        }
 
-        return objetivo;
+        return null;
     }
 
-    private Enemigo buscarObjetivo() {
+    private Atacable buscarObjetivo(
+            List<Estructura> estructuras) {
 
-        int centroCaballero =
-                caballero.getX() + Caballero.ANCHO / 2;
-
-        Enemigo objetivo = null;
+        Atacable objetivo = null;
         int distanciaMinima = Integer.MAX_VALUE;
 
         for (Enemigo enemigo : enemigos) {
 
-            if (!enemigo.estaVivo()) {
-                continue;
-            }
+            if (!enemigo.estaVivo()) continue;
 
-            Integer posicion = posiciones.get(enemigo);
+            Integer x = posiciones.get(enemigo);
 
-            if (posicion == null) {
-                continue;
-            }
+            if (x == null) continue;
 
-            int centroEnemigo =
-                    posicion + ANCHO_ENEMIGO / 2;
+            int distancia = evaluarDistancia(
+                x, ENEMIGO_Y
+            );
 
-            int diferencia = centroEnemigo - centroCaballero;
-            int distancia = Math.abs(diferencia);
-
-            boolean delante = caballero.miraDerecha()
-                    ? diferencia >= 0
-                    : diferencia <= 0;
-
-            if (!delante) {
-                continue;
-            }
-
-            boolean alturaCompatible =
-                    Math.abs(caballero.getY() - ENEMIGO_Y) < 60;
-
-            if (alturaCompatible
-                    && distancia <= caballero.getAlcanceAtaque()
-                    && distancia < distanciaMinima) {
+            if (distancia < distanciaMinima) {
 
                 objetivo = enemigo;
+                distanciaMinima = distancia;
+            }
+        }
+
+        for (Estructura estructura : estructuras) {
+
+            if (estructura.estaDestruida()) continue;
+
+            int distancia = evaluarDistancia(
+                estructura.getX(),
+                estructura.getY()
+            );
+
+            if (distancia < distanciaMinima) {
+
+                objetivo = estructura;
                 distanciaMinima = distancia;
             }
         }
@@ -175,60 +121,27 @@ public class GestorCombate {
         return objetivo;
     }
 
-    private boolean dispararArco(Arco arco) {
+    private int evaluarDistancia(int x, int y) {
 
-        if (arco.getDurabilidad() <= 0) {
-            return false;
+        int centroJugador =
+            caballero.getX() + Caballero.ANCHO / 2;
+
+        int diferencia = x + 22 - centroJugador;
+
+        boolean delante = caballero.miraDerecha()
+            ? diferencia >= 0
+            : diferencia <= 0;
+
+        int distancia = Math.abs(diferencia);
+
+        if (!delante
+                || Math.abs(caballero.getY() - y) >= 60
+                || distancia > caballero.getAlcanceAtaque()) {
+
+            return Integer.MAX_VALUE;
         }
 
-        Flecha municion = buscarMunicion();
-
-        if (municion == null || !municion.consumirUna()) {
-            System.out.println("No quedan flechas");
-            return false;
-        }
-
-        int direccion = caballero.miraDerecha() ? 1 : -1;
-
-        double origenX = caballero.getX()
-                + (direccion > 0
-                    ? Caballero.ANCHO + 10
-                    : -10);
-
-        double origenY = caballero.getY() + 35;
-
-        proyectiles.disparar(
-            origenX,
-            origenY,
-            direccion,
-            caballero.getAlcanceAtaque(),
-            municion
-        );
-
-        arco.disparar(null);
-
-        if (municion.getCantidad() == 0) {
-            inventario.eliminarItem(municion);
-        }
-
-        return true;
-    }
-
-    private Flecha buscarMunicion() {
-
-        for (Item item : inventario.obtenerItems()) {
-
-            if (item instanceof Flecha) {
-
-                Flecha flecha = (Flecha) item;
-
-                if (flecha.getCantidad() > 0) {
-                    return flecha;
-                }
-            }
-        }
-
-        return null;
+        return distancia;
     }
 
     public void reiniciar() {

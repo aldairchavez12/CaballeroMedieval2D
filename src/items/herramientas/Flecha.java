@@ -47,8 +47,15 @@ public class Flecha extends Item {
     }
 
     public void impactar(Atacable objetivo) {
+        impactar(objetivo, 0);
+    }
+
+    public void impactar(
+            Atacable objetivo, int bonoDanio) {
         if (objetivo != null) {
-            objetivo.recibirDanio(danio);
+            objetivo.recibirDanio(
+                danio + Math.max(0, bonoDanio)
+            );
         }
     }
 }

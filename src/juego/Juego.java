@@ -287,7 +287,8 @@ public class Juego {
         gestorProyectiles.actualizar(
             enemigos,
             posicionesEnemigos,
-            ENEMIGO_Y
+            ENEMIGO_Y,
+            estructuras
         );
         gestorAliados.actualizar(
             caballero,

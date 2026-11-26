@@ -125,6 +125,34 @@ public class Caballero extends Entidad {
             estrategiaAtaque.ejecutar(this, objetivo);
         }
     }
+    public void verificarArma() {
+
+        if (arma != null && arma.getDurabilidad() <= 0) {
+            equiparArma(null);
+        }
+    }
+
+    public boolean usaAtaqueDistancia() {
+
+        verificarArma();
+        return estrategiaAtaque.esAtaqueDistancia();
+    }
+
+    public boolean ejecutarAtaque(
+            Atacable objetivo,
+            LanzadorProyectiles lanzador) {
+
+        if (!estaVivo()) return false;
+
+        verificarArma();
+
+        return estrategiaAtaque.ejecutarAtaque(
+            this,
+            objetivo,
+            lanzador
+        );
+    }
+
     public int getAlcanceAtaque() {
         return estrategiaAtaque.getAlcance();
     }
