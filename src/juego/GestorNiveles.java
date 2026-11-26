@@ -1,6 +1,12 @@
 
 package juego;
 
+import escenario.Cofre;
+import java.util.Random;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -12,6 +18,85 @@ import java.util.List;
 import java.util.Map;
 
 public class GestorNiveles {
+
+    private final List<Cofre> cofres = new ArrayList<>();
+
+    private final Random azarCofres = new Random();
+
+    public void generarCofres(CreadorItems creador) {
+
+        cofres.clear();
+
+        List<String> botin = new ArrayList<>(
+            Arrays.asList(
+                "espada_basica",
+                "arco_basico",
+                "flecha_basica",
+                "escudo_basico",
+                "armadura_basica",
+                "pocima_vida",
+                "comida_manzana",
+                "habilidad_furia"
+            )
+        );
+
+        Collections.shuffle(botin, azarCofres);
+
+        // Garantizar un arma antes del primer combate.
+        Collections.swap(
+            botin,
+            0,
+            botin.indexOf("espada_basica")
+        );
+
+        for (int i = 0; i < botin.size(); i++) {
+
+            int x = 200 + i * 550
+                + azarCofres.nextInt(100);
+
+            cofres.add(
+                new Cofre(
+                    x,
+                    580,
+                    creador.crear(botin.get(i))
+                )
+            );
+        }
+    }
+
+    public List<Cofre> getCofres() {
+        return Collections.unmodifiableList(cofres);
+    }
+
+    public Cofre buscarCofreCercano(
+            int jugadorX,
+            int jugadorY) {
+
+        Cofre cercano = null;
+        int distanciaMinima = Integer.MAX_VALUE;
+
+        for (Cofre cofre : cofres) {
+
+            if (cofre.estaAbierto()
+                    || !cofre.estaCerca(jugadorX, jugadorY)) {
+
+                continue;
+            }
+
+            int distancia =
+                Math.abs(cofre.getX() - jugadorX);
+
+            if (distancia < distanciaMinima) {
+
+                cercano = cofre;
+                distanciaMinima = distancia;
+            }
+        }
+
+        return cercano;
+    }
+
+    
 
     private final DatosJuego datos;
 

@@ -104,6 +104,8 @@ public class Juego {
 
     private void prepararCapitulo() {
 
+        gestorNiveles.generarCofres(creadorItems);
+
         // Limpiar proyectiles del capitulo anterior
         gestorProyectiles.limpiar();
 
@@ -192,6 +194,36 @@ public class Juego {
 
     public int getMonedas() {
         return caballero.getMonedas();
+    }
+
+    public List<Cofre> getCofres() {
+        return gestorNiveles.getCofres();
+    }
+
+    public String abrirCofreCercano() {
+
+        if (!estaActivo() || !caballero.estaVivo()) {
+            return "";
+        }
+
+        Cofre cofre = gestorNiveles.buscarCofreCercano(
+            caballero.getX(),
+            caballero.getY()
+        );
+
+        if (cofre == null) {
+            return "";
+        }
+
+        if (!cofre.abrir(caballero.getInventario())) {
+
+            return "INVENTARIO LLENO";
+        }
+
+        caballero.agregarMonedas(2);
+
+        return "OBTUVISTE: "
+            + cofre.getNombreContenido();
     }
 
     public Inventario getInventario() {

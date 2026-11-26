@@ -44,17 +44,8 @@ public class PanelJuego extends JPanel {
 
     private final boolean[] monedasRecogidas = new boolean[TOTAL_MONEDAS];
     private final int[][] posicionesMonedas = {{320,565}, {950,565}, {1700,565}, {2540,565}, {3450,565}, {4450,565}};
-    private final Random azarCofres = new Random();
 
-    private final int[] posicionesCofres =
-        new int[8];
-
-    private final boolean[] cofresAbiertos =
-        new boolean[8];
-
-    private final String[] botinCofres =
-        new String[8];
-    private int avisoDuracion;
+private int avisoDuracion;
     private String aviso = "";
     private int efectoAtaque;
     private int vidaAnterior;
@@ -125,7 +116,7 @@ public class PanelJuego extends JPanel {
             repaint();
         });
 
-generarCofres();
+
         configurarControles();
         gameLoop = new Timer(16, e -> actualizarPantalla());
         juego.iniciar();
@@ -407,10 +398,7 @@ generarCofres();
             monedasRecogidas, false
         );
 
-        generarCofres();
-
-
-        camaraX = 0;
+camaraX = 0;
         zonaVisual = -1;
 
         pausado = false;
@@ -467,7 +455,7 @@ generarCofres();
         if (juego.getCapitulo() != capituloVisual) {
             capituloVisual = juego.getCapitulo();
             for (int i = 0; i < monedasRecogidas.length; i++) monedasRecogidas[i] = false;
-            generarCofres();
+            
             camaraX = 0;
             zonaVisual = -1;
             avisar("NUEVO CAPITULO: " + capituloVisual);
@@ -528,87 +516,16 @@ generarCofres();
         }
     }
 
-    private void generarCofres() {
+private void abrirCofre() {
 
-        String[] botin = {
-            "espada_basica",
-            "arco_basico",
-            "flecha_basica",
-            "escudo_basico",
-            "armadura_basica",
-            "pocima_vida",
-            "comida_manzana",
-            "habilidad_furia"
-        };
+        if (!puedeJugar()) return;
 
-        // Barajar el contenido de los cofres
-        for (int i = botin.length - 1; i > 0; i--) {
-            int j = azarCofres.nextInt(i + 1);
-            String temporal = botin[i];
-            botin[i] = botin[j];
-            botin[j] = temporal;
-        }
+        String resultado = juego.abrirCofreCercano();
 
-        // Garantizar una espada antes del primer enemigo
-        for (int i = 0; i < botin.length; i++) {
+        if (!resultado.isEmpty()) {
 
-            if ("espada_basica".equals(botin[i])) {
-                String temporal = botin[0];
-                botin[0] = botin[i];
-                botin[i] = temporal;
-                break;
-            }
-        }
-
-        for (int i = 0; i < posicionesCofres.length; i++) {
-
-            posicionesCofres[i] =
-                200 + i * 550 + azarCofres.nextInt(100);
-
-            cofresAbiertos[i] = false;
-            botinCofres[i] = botin[i];
-        }
-    }
-
-    private void abrirCofre() {
-
-        if (pausado || !juego.estaActivo()) {
-            return;
-        }
-
-        Caballero c = juego.getCaballero();
-
-        for (int i = 0; i < posicionesCofres.length; i++) {
-
-            if (cofresAbiertos[i]) {
-                continue;
-            }
-
-            if (Math.abs(c.getX()
-                    - posicionesCofres[i]) > 100) {
-                continue;
-            }
-
-            if (Math.abs(c.getY() - 550) > 80) {
-                continue;
-            }
-
-            Item premio =
-                juego.crearObjeto(botinCofres[i]);
-
-            if (juego.recogerItem(premio)) {
-
-                cofresAbiertos[i] = true;
-                juego.recogerMonedas(2);
-
-                avisar("OBTUVISTE: "
-                    + premio.getNombre());
-
-            } else {
-                avisar("INVENTARIO LLENO");
-            }
-
-            return;
+            avisar(resultado);
+            repaint();
         }
     }
 
@@ -643,8 +560,7 @@ generarCofres();
         );
         renderizadorEscenario.dibujarCofre(
             mundo,
-            posicionesCofres,
-            cofresAbiertos,
+            juego.getCofres(),
             juego.getCaballero().getX(),
             juego.estaActivo(),
             pausado
