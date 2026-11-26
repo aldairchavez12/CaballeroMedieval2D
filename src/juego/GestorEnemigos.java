@@ -144,13 +144,15 @@ public class GestorEnemigos {
             ) * -Integer.compare(diferencia, 0);
         }
 
-        x = Math.max(
-            0,
-            Math.min(
-                Juego.ANCHO_NIVEL - ANCHO_ENEMIGO,
-                x + movimiento
-            )
+        enemigo.prepararMovimiento(
+            x,
+            movimiento,
+            Juego.ANCHO_NIVEL - ANCHO_ENEMIGO
         );
+
+        enemigo.update();
+
+        x = enemigo.getX();
 
         posiciones.put(enemigo, x);
 

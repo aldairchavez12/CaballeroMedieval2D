@@ -24,8 +24,8 @@ public class Boss extends Enemigo {
     }
 
     @Override
-    public void update() { // Añadido según UML
-        System.out.println(getNombre() + " (Boss) está ejecutando su lógica en fase " + fase);
+    public void update() {
+        super.update();
     }
 
     @Override

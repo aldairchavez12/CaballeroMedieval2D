@@ -1,41 +1,69 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-
-
-
-/**
- *
- * @author JuLoq
-*/
 package entidades;
 
 import interfaces.Atacable;
 
 public class Enemigo extends Entidad {
-    protected int recompensa;
-    protected double velocidad; // Añadido según UML
 
-    public Enemigo(String nombre, int vida, int ataqueBase, int recompensa, double velocidad) {
-        super(nombre, vida, ataqueBase); // Cambiado a ataqueBase
+    protected int recompensa;
+    protected double velocidad;
+
+    private int x;
+    private int desplazamiento;
+    private int limiteX;
+
+    public Enemigo(String nombre, int vida, int ataqueBase,
+                   int recompensa, double velocidad) {
+
+        super(nombre, vida, ataqueBase);
+
         this.recompensa = recompensa;
         this.velocidad = velocidad;
     }
 
-    @Override
-    public void update() {
-        System.out.println(getNombre() + " patrulla la zona.");
+    public void prepararMovimiento(int posicion,
+                                    int desplazamiento,
+                                    int limiteX) {
+
+        this.x = posicion;
+        this.desplazamiento = desplazamiento;
+        this.limiteX = limiteX;
     }
 
     @Override
-    public void moverse() { // Añadido obligatoriamente por el UML
-        System.out.println(getNombre() + " se mueve a una velocidad de " + velocidad);
+    public void update() {
+        if (estaVivo()) {
+            moverse();
+        }
+    }
+
+    @Override
+    public void moverse() {
+
+        x = Math.max(
+            0,
+            Math.min(limiteX, x + desplazamiento)
+        );
+
+        desplazamiento = 0;
     }
 
     @Override
     public void atacar(Atacable objetivo) {
-        System.out.println(getNombre() + " ataca.");
-        objetivo.recibirDanio(this.getAtaqueBase());
+
+        if (estaVivo() && objetivo != null) {
+            objetivo.recibirDanio(getAtaqueBase());
+        }
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public double getVelocidad() {
+        return velocidad;
+    }
+
+    public int getRecompensa() {
+        return recompensa;
     }
 }
