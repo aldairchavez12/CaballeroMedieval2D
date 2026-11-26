@@ -1,27 +1,26 @@
-
 # Caballero Medieval 2D
 
-### Videojuego de plataformas desarrollado en Java
+Videojuego de plataformas, aventura y combate desarrollado en Java.
 
 **Universidad Peruana Cayetano Heredia (UPCH)**  
-**Carrera:** Ingeniería Informática  
-**Curso:** Programación Orientada a Objetos  
-**Equipo:** 2
+Facultad de Ciencias e Ingeniería  
+Carrera de Ingeniería Informática  
+Curso: Programación Orientada a Objetos  
+Grupo 2 | Semestre 2026-II
 
 ---
 
-## Descripción del proyecto
+## Descripción
 
-**Caballero Medieval 2D** es un videojuego de plataformas y combate desarrollado en Java, utilizando Swing y Java2D para su interfaz gráfica.
+Caballero Medieval 2D es un videojuego académico que aplica los fundamentos de la programación orientada a objetos mediante una arquitectura modular, patrones de diseño, gestión de datos JSON y consumo de una API externa.
 
-El proyecto aplica los principios de programación orientada a objetos mediante una arquitectura modular que permite administrar personajes, enemigos, herramientas, consumibles y escenarios.
-
-El jugador controla a un caballero medieval que debe superar enfrentamientos para liberar su reino.
+El jugador controla a un caballero que debe enfrentarse a diferentes enemigos, administrar sus recursos y superar tres capítulos para liberar el reino de Valdoria.
 
 ## Historia: La Fortaleza Oscura
 
 El reino de Valdoria ha sido invadido por las fuerzas del Señor de las Sombras.
 
+Un caballero emprende una aventura para recuperar la fortaleza y devolver la paz al reino.
 Un caballero emprende una misión para recuperar la fortaleza y restaurar la paz.
 
 La aventura se divide en tres capítulos secuenciales:
@@ -34,205 +33,327 @@ La aventura se divide en tres capítulos secuenciales:
 
 Para avanzar al siguiente capítulo, el jugador debe derrotar al enemigo correspondiente.
 
-El juego contempla dos resultados: victoria al derrotar al jefe final y derrota cuando la vida del caballero llega a cero.
+| Capítulo | Escenario |
+|---|---|
+| I | Bosque de las Sombras |
+| II | Fortaleza Abandonada |
+| III | Trono de la Oscuridad |
+
+El jugador debe derrotar a los enemigos del capítulo y alcanzar el portal para continuar su aventura.
+
+## Características principales
+
+- Movimiento horizontal, salto y gravedad.
+- Combate cuerpo a cuerpo y a distancia.
+- Enemigos con detección y persecución.
+- Jefe final con ataques especiales.
+- Sistema de aliados.
+- Inventario y barra de acceso rápido.
+- Equipamiento de armas, escudos y armaduras.
+- Sistema de durabilidad de armas.
+- Munición y proyectiles.
+- Comida, pócimas y habilidades.
+- Habilidad temporal Furia.
+- Cofres interactivos y monedas coleccionables.
+- Compra de recuperación de vida.
+- Tres capítulos con progresión narrativa.
+- Menús de pausa y derrota.
+- Reinicio de capítulos.
+- Condiciones de victoria y derrota.
+- Clima ambiental mediante Open-Meteo.
+- Configuración mediante archivos JSON.
+- Pruebas automatizadas del dominio.
 
 ## Tecnologías utilizadas
 
-- **Java:** lenguaje principal.
-- **Java Swing:** creación de la ventana e interfaz gráfica.
-- **Java2D:** renderizado del escenario, personajes y elementos visuales.
-- **Git:** control de versiones.
-- **GitHub:** colaboración e integración del equipo.
-- **Visual Studio Code:** entorno de desarrollo.
+| Tecnología | Propósito |
+|---|---|
+| Java | Lenguaje principal |
+| Java Swing | Interfaz gráfica |
+| Java2D | Renderizado del videojuego |
+| Gson | Procesamiento de JSON |
+| Java HttpClient | Consumo de API REST |
+| Open-Meteo | Información meteorológica |
+| Git | Control de versiones |
+| GitHub | Integración y colaboración |
+| Visual Studio Code | Entorno de desarrollo |
 
-## Arquitectura del proyecto
+## Arquitectura
 
-El videojuego está organizado en paquetes que separan las responsabilidades de cada módulo.
+El proyecto separa las responsabilidades del dominio, la gestión del videojuego, la presentación y el acceso a datos.
 
-```text
-src/
-├── entidades/
-│   ├── Entidad.java
-│   ├── Caballero.java
-│   ├── Aliado.java
-│   ├── Enemigo.java
-│   └── Boss.java
-│
-├── interfaces/
-│   └── Atacable.java
-│
-├── items/
-│   ├── Item.java
-│   ├── Inventario.java
-│   ├── herramientas/
-│   │   ├── Herramienta.java
-│   │   ├── Espada.java
-│   │   ├── Arco.java
-│   │   ├── Flecha.java
-│   │   ├── Armadura.java
-│   │   └── Escudo.java
-│   └── consumibles/
-│       ├── Consumible.java
-│       ├── Comida.java
-│       ├── Pocima.java
-│       └── Habilidad.java
-│
-├── escenario/
-│   └── Estructura.java
-│
-└── juego/
-    ├── Main.java
-    ├── Juego.java
-    ├── VentanaJuego.java
-    └── PanelJuego.java
+```mermaid
+flowchart TD
+    U[Jugador] --> P[PanelJuego]
+    P --> CE[ControladorEntrada]
+    P --> R[Renderizadores]
+    P --> J[Juego - Singleton]
+    P --> API[APIClient]
+    API --> OM[Open-Meteo]
+
+    J --> GN[GestorNiveles]
+    J --> GC[GestorCombate]
+    J --> GE[GestorEnemigos]
+    J --> GP[GestorProyectiles]
+    J --> GA[GestorAliados]
+
+    J --> C[Caballero]
+    C --> I[Inventario]
+    C --> S[AtaqueStrategy]
+    I --> IT[Items]
+
+    GN --> E[Enemigos]
+    GN --> CO[Cofres]
+    GN --> MO[Monedas]
+    GN --> F[CreadorEnemigo]
+    GN --> D[DatosJuego]
+    D --> JSON[Archivos JSON]
 ```
 
-### Responsabilidades principales
+## Organización del proyecto
 
-**Entidad:** clase abstracta que representa los comportamientos comunes de los personajes.
+```text
+CaballeroMedieval2D/
+├── data/
+│   ├── enemigos.json
+│   ├── historia.json
+│   ├── items.json
+│   └── niveles.json
+├── lib/
+├── src/
+│   ├── entidades/
+│   ├── escenario/
+│   ├── interfaces/
+│   ├── items/
+│   │   ├── herramientas/
+│   │   └── consumibles/
+│   └── juego/
+├── tests/
+│   └── PruebasJuego.java
+└── README.md
+```
 
-**Caballero:** protagonista del videojuego. Implementa movimiento, salto, ataque y administración de vida.
+### Componentes principales
 
-**Enemigo:** representa a los adversarios del jugador.
+| Componente | Responsabilidad |
+|---|---|
+| Entidad | Abstracción de los personajes |
+| Caballero | Protagonista, movimiento, combate e inventario |
+| Enemigo | Comportamiento de los adversarios |
+| Boss | Especialización de enemigo |
+| Aliado | Apoyo al protagonista |
+| Inventario | Administración de objetos |
+| Juego | Coordinación general de la partida |
+| GestorNiveles | Configuración de capítulos y elementos del escenario |
+| GestorCombate | Coordinación de ataques |
+| GestorEnemigos | Comportamiento de enemigos |
+| GestorAliados | Comportamiento de aliados |
+| GestorProyectiles | Movimiento y colisiones de proyectiles |
+| ControladorEntrada | Registro de controles |
+| Renderizadores | Representación gráfica |
+| APIClient | Comunicación con la API externa |
+| DatosJuego | Acceso a configuraciones JSON |
 
-**Boss:** especialización de Enemigo que incorpora ataques especiales.
+## Fundamentos de programación orientada a objetos
 
-**Atacable:** interfaz que permite que diferentes objetos reciban daño.
+### Encapsulamiento
 
-**Item:** clase abstracta de los objetos utilizables.
+El estado interno de las entidades y objetos se administra mediante métodos de consulta y modificación controlada.
 
-**Inventario:** administra los objetos del personaje.
+### Herencia
 
-**Juego:** coordina las entidades, los capítulos, el combate y los estados de la partida.
+Caballero, Enemigo y Aliado heredan de Entidad. Boss especializa el comportamiento de Enemigo.
 
-**PanelJuego:** gestiona la entrada del teclado y el renderizado gráfico.
+### Abstracción
 
-**VentanaJuego:** administra la ventana principal.
+Entidad, Item, Herramienta y Consumible representan conceptos generales que se especializan mediante subclases.
 
-## Principios de programación orientada a objetos
+### Polimorfismo
 
-### 1. Encapsulamiento
+Los personajes, objetos y estrategias proporcionan implementaciones específicas de sus respectivos contratos.
 
-Los atributos privados se consultan y modifican mediante métodos definidos por las clases.
+### Relaciones entre objetos
 
-### 2. Herencia
+- Composición: Caballero e Inventario.
+- Agregación: Inventario e Item.
+- Asociación: Caballero y su estrategia de ataque.
+- Dependencia: Cofre e Inventario durante la apertura.
+- Realización: Entidad y Estructura implementan Atacable.
 
-`Caballero` y `Enemigo` heredan de `Entidad`, mientras que `Boss` hereda de `Enemigo`.
+## Patrones de diseño
 
-### 3. Polimorfismo
+| Patrón | Tipo | Implementación |
+|---|---|---|
+| Singleton | Creacional | Juego |
+| Factory Method | Creacional | CreadorEnemigo |
+| Strategy | Comportamiento | AtaqueStrategy |
+| Observer | Comportamiento | Entidad y PropertyChangeSupport |
 
-Los personajes pueden actualizarse mediante referencias de tipo `Entidad`.
+### Singleton
 
-Los ataques utilizan el contrato de la interfaz `Atacable`.
+Centraliza la coordinación de la partida mediante una única instancia de Juego.
 
-### 4. Abstracción
+### Factory Method
 
-Las clases abstractas `Entidad`, `Item`, `Herramienta` y `Consumible` definen características comunes para sus especializaciones.
+Permite crear enemigos normales y jefes mediante creadores especializados que interpretan datos JSON.
 
-### 5. Relaciones entre objetos
+### Strategy
 
-El diseño UML contempla asociaciones, agregaciones y composiciones para representar la interacción y pertenencia entre los diferentes elementos del videojuego.
+Permite seleccionar diferentes comportamientos de ataque según el equipamiento del caballero.
 
-## Características del prototipo
+### Observer
 
-- Ventana gráfica desarrollada con Swing.
-- Escenario medieval renderizado mediante Java2D.
-- Movimiento horizontal del caballero.
-- Sistema de salto y gravedad.
-- Combate mediante ataques cuerpo a cuerpo.
-- Enemigos con detección y persecución por proximidad.
-- Ataques enemigos con intervalo de espera.
-- Jefe final con ataque especial.
-- Sistema de vida y recepción de daño.
-- Tres capítulos con progresión secuencial.
-- Condiciones de victoria y derrota.
-- Monedas coleccionables en el escenario.
-- Elementos visuales como plataformas, escaleras y cofres.
+Notifica cambios en la vida del personaje y permite que la interfaz reaccione mediante efectos y avisos visuales.
 
-**Nota:** el proyecto se encuentra en desarrollo. Algunos elementos visuales todavía no cuentan con colisiones o interacciones completas.
+## Integración con API externa
+
+El videojuego consulta información meteorológica de Lima, Perú, mediante la API de Open-Meteo.
+
+La clase APIClient centraliza:
+
+- Solicitudes HTTP asíncronas.
+- Procesamiento de respuestas JSON.
+- Validación de respuestas HTTP.
+- Tiempo máximo de conexión.
+- Tiempo máximo de solicitud.
+- Manejo de excepciones.
+- Clima de respaldo cuando no hay conexión.
+
+La consulta meteorológica permite modificar los efectos ambientales sin que la disponibilidad del servicio sea un requisito para jugar.
+
+Documentación: https://open-meteo.com/en/docs
 
 ## Controles
 
-| Tecla | Acción |
+| Control | Acción |
 |---|---|
 | A | Mover a la izquierda |
 | D | Mover a la derecha |
 | Espacio | Saltar |
 | J | Atacar |
-| Enter | Iniciar o continuar la historia |
+| E | Abrir cofre cercano |
+| I | Abrir o cerrar inventario |
+| X | Eliminar objeto seleccionado |
+| H | Comprar recuperación de vida |
+| 1-9 | Seleccionar objeto de la barra |
+| Rueda del ratón | Cambiar selección |
+| Clic izquierdo | Utilizar objeto seleccionado |
+| Clic derecho | Atacar |
+| Clic derecho en inventario | Utilizar objeto |
+| Esc | Pausar o cerrar inventario |
+| Enter | Continuar historia o reanudar |
+| R | Reiniciar después de una derrota |
 
 ## Requisitos
 
 - JDK 17 o superior.
-- Git (para clonar el repositorio).
-- Un sistema operativo con entorno gráfico compatible con Java Swing.
+- Git.
+- Entorno gráfico compatible con Swing.
+- Librerías incluidas en lib/.
+- Conexión a internet opcional para el clima.
 
 ## Instalación y ejecución
 
-### 1. Clonar el repositorio
+### Clonar el repositorio
 
 ```bash
 git clone https://github.com/aldairchavez12/CaballeroMedieval2D.git
-```
-
-### 2. Entrar al proyecto
-
-```bash
 cd CaballeroMedieval2D
 ```
 
-### 3. Compilar
+### Windows - PowerShell
 
-Desde PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force -Path out | Out-Null
-
-javac -encoding UTF-8 -d out (Get-ChildItem -Recurse -Filter *.java src | ForEach-Object { $_.FullName })
-```
-
-### 4. Ejecutar
+Compilar:
 
 ```powershell
-java -cp out juego.Main
+New-Item -ItemType Directory -Path out -Force | Out-Null
+
+$archivos = Get-ChildItem src -Recurse -Filter *.java |
+    ForEach-Object { $_.FullName }
+
+javac -encoding UTF-8 -cp "lib/*" -d out $archivos
 ```
 
-## Equipo de desarrollo
+Ejecutar:
 
-El proyecto se desarrolla colaborativamente mediante ramas de Git.
+```powershell
+java -cp "out;lib/*" juego.Main
+```
 
-| Integrante | Responsabilidad |
-|---|---|
-| Aldair Chávez | Integración, arquitectura y lógica del videojuego |
-| Jherson | Personajes: Caballero y Aliado |
-| Pablo | Enemigos, Boss y estructuras |
-| Harold | Equipamiento, herramientas y consumibles |
+### Linux y macOS
 
-### Estrategia de ramas
+Compilar:
 
-- `main`: versión integrada del proyecto.
-- `feature/personajes`: módulo de personajes.
-- `feature/enemigos`: módulo de enemigos.
-- `feature/equipamiento`: sistema de herramientas y consumibles.
-- `feature/integracion`: lógica, interfaz y funcionamiento general del videojuego.
+```bash
+mkdir -p out
 
-Los módulos se integran mediante Pull Requests, conservando el historial de contribuciones.
+find src -name "*.java" -print0 |
+    xargs -0 javac -encoding UTF-8 -cp "lib/*" -d out
+```
 
-## Estado del proyecto
+Ejecutar:
 
-**Estado:** prototipo jugable en desarrollo.
+```bash
+java -cp "out:lib/*" juego.Main
+```
 
-### Próximas mejoras
+Ejecutar siempre desde la raíz del repositorio para que el programa encuentre los archivos de configuración.
 
-- Animaciones y sprites de personajes.
-- Escenarios diferenciados por capítulo.
-- Colisiones con plataformas y obstáculos.
-- Implementación completa del sistema de inventario.
-- Integración de armas y consumibles al combate.
-- Efectos de sonido y música.
-- Pantalla de inicio, pausa y reinicio.
-- Pruebas de jugabilidad y optimización.
+## Pruebas automatizadas
+
+El archivo tests/PruebasJuego.java contiene casos de prueba para validar las principales reglas del dominio.
+
+### Windows
+
+```powershell
+javac -encoding UTF-8 -cp "out;lib/*" -d out tests/PruebasJuego.java
+
+java -cp "out;lib/*" PruebasJuego
+```
+
+### Linux y macOS
+
+```bash
+javac -encoding UTF-8 -cp "out:lib/*" -d out tests/PruebasJuego.java
+
+java -cp "out:lib/*" PruebasJuego
+```
+
+Las pruebas cubren inventario, combate, economía, monedas, cofres, habilidades, patrones de diseño y otras mecánicas.
+
+## Control de versiones
+
+El desarrollo utiliza ramas de trabajo y commits incrementales.
+
+- main: versión integrada del proyecto.
+- feature/integracion-final: integración de componentes.
+- Ramas feature: desarrollo de funcionalidades específicas.
+
+El historial de Git permite identificar las contribuciones realizadas por los integrantes.
+
+## Equipo académico
+
+### Presentado por
+
+- Avilez Salinas, Harold Dair.
+- Chavez Aliaga, Aldair Alexander.
+
+### Docentes
+
+- Emanuel Ortiz Ortiz.
+- Wilder Nina Choquehuayta.
+
+## Limitaciones y mejoras futuras
+
+- Incorporación de sprites y animaciones más detalladas.
+- Música y efectos de sonido.
+- Mejoras en las colisiones del escenario.
+- Ampliación de niveles y enemigos.
+- Optimización de recursos gráficos.
+- Mayor cobertura de pruebas automatizadas.
 
 ---
 
-**Caballero Medieval 2D — Proyecto académico de Ingeniería Informática, UPCH.**
+Caballero Medieval 2D  
+Universidad Peruana Cayetano Heredia  
+Ingeniería Informática | Programación Orientada a Objetos | 2026-II

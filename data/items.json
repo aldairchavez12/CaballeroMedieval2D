@@ -1,0 +1,76 @@
+
+{
+  "herramientas": [
+    {
+      "id": "espada_basica",
+      "tipo": "Espada",
+      "nombre": "Espada de hierro",
+      "descripcion": "Espada inicial del caballero",
+      "danio": 50,
+      "durabilidad": 100,
+      "alcance": 90.0
+    },
+    {
+      "id": "arco_basico",
+      "tipo": "Arco",
+      "nombre": "Arco de madera",
+      "descripcion": "Arco para ataques a distancia",
+      "danio": 10,
+      "durabilidad": 80,
+      "alcance": 280.0
+    },
+    {
+      "id": "flecha_basica",
+      "tipo": "Flecha",
+      "nombre": "Flecha de madera",
+      "descripcion": "Municion para el arco",
+      "danio": 8,
+      "cantidad": 20
+    },
+    {
+      "id": "armadura_basica",
+      "tipo": "Armadura",
+      "nombre": "Armadura de hierro",
+      "descripcion": "Proteccion para el caballero",
+      "defensa": 10,
+      "durabilidad": 100
+    },
+    {
+      "id": "escudo_basico",
+      "tipo": "Escudo",
+      "nombre": "Escudo de madera",
+      "descripcion": "Reduce el danio recibido",
+      "defensa": 8,
+      "durabilidad": 80
+    }
+  ],
+  "consumibles": [
+    {
+      "id": "pocima_vida",
+      "tipo": "Pocima",
+      "nombre": "Pocima de vida",
+      "descripcion": "Recupera 40 puntos de vida",
+      "cantidad": 1,
+      "curacion": 40,
+      "efecto": "Curacion"
+    },
+    {
+      "id": "comida_manzana",
+      "tipo": "Comida",
+      "nombre": "Manzana",
+      "descripcion": "Recupera 15 puntos de vida",
+      "cantidad": 1,
+      "curacion": 15,
+      "efecto": "Curacion"
+    },
+    {
+      "id": "habilidad_furia",
+      "tipo": "Habilidad",
+      "nombre": "Furia del caballero",
+      "descripcion": "Habilidad especial de combate",
+      "cantidad": 1,
+      "efecto": "Aumento de ataque",
+      "valor": 10
+    }
+  ]
+}

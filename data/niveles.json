@@ -1,0 +1,123 @@
+{
+  "anchoNivel": 4800,
+  "metaX": 4670,
+  "capitulos": [
+    {
+      "id": 1,
+      "titulo": "CAPITULO I - BOSQUE DE LAS SOMBRAS",
+      "enemigos": [
+        {
+          "tipo": 1,
+          "x": 740
+        },
+        {
+          "tipo": 1,
+          "x": 1520
+        },
+        {
+          "tipo": 1,
+          "x": 2350
+        },
+        {
+          "tipo": 1,
+          "x": 3140
+        },
+        {
+          "tipo": 4,
+          "x": 4160
+        }
+      ],
+      "cofre": {
+        "x": 2770,
+        "y": 556,
+        "monedas": 5
+      },
+      "monedasX": [
+        320,
+        950,
+        1700,
+        2540,
+        3450,
+        4450
+      ]
+    },
+    {
+      "id": 2,
+      "titulo": "CAPITULO II - FORTALEZA ABANDONADA",
+      "enemigos": [
+        {
+          "tipo": 2,
+          "x": 740
+        },
+        {
+          "tipo": 2,
+          "x": 1520
+        },
+        {
+          "tipo": 2,
+          "x": 2350
+        },
+        {
+          "tipo": 2,
+          "x": 3140
+        },
+        {
+          "tipo": 5,
+          "x": 4160
+        }
+      ],
+      "cofre": {
+        "x": 2770,
+        "y": 556,
+        "monedas": 5
+      },
+      "monedasX": [
+        320,
+        950,
+        1700,
+        2540,
+        3450,
+        4450
+      ]
+    },
+    {
+      "id": 3,
+      "titulo": "CAPITULO III - TRONO DE LA OSCURIDAD",
+      "enemigos": [
+        {
+          "tipo": 3,
+          "x": 740
+        },
+        {
+          "tipo": 3,
+          "x": 1520
+        },
+        {
+          "tipo": 3,
+          "x": 2350
+        },
+        {
+          "tipo": 3,
+          "x": 3140
+        },
+        {
+          "tipo": 6,
+          "x": 4160
+        }
+      ],
+      "cofre": {
+        "x": 2770,
+        "y": 556,
+        "monedas": 5
+      },
+      "monedasX": [
+        320,
+        950,
+        1700,
+        2540,
+        3450,
+        4450
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+
+{
+  "titulo": "La Fortaleza Oscura",
+  "capitulos": [
+    {
+      "id": 1,
+      "inicio": "Cruza el bosque y derrota al guardian. ENTER para empezar.",
+      "zona1": "LAS SOMBRAS CRECEN... PROTEGE EL REINO",
+      "zona2": "LOS GUARDIANES VIGILAN ESTE CAMINO",
+      "zona3": "LA PUERTA DEL DESTINO ESTA CERCA",
+      "final": "Has protegido el bosque. La fortaleza te espera."
+    },
+    {
+      "id": 2,
+      "inicio": "Libera la fortaleza del ejercito oscuro. ENTER para empezar.",
+      "zona1": "LAS SOMBRAS CRECEN... PROTEGE EL REINO",
+      "zona2": "LOS GUARDIANES VIGILAN ESTE CAMINO",
+      "zona3": "LA PUERTA DEL DESTINO ESTA CERCA",
+      "final": "La fortaleza ha sido liberada. Avanza hacia el trono."
+    },
+    {
+      "id": 3,
+      "inicio": "Alcanza el trono y derrota al Senor de las Sombras. ENTER.",
+      "zona1": "LAS SOMBRAS CRECEN... PROTEGE EL REINO",
+      "zona2": "LOS GUARDIANES VIGILAN ESTE CAMINO",
+      "zona3": "LA PUERTA DEL DESTINO ESTA CERCA",
+      "final": "VICTORIA: EL REINO DE VALDORIA ES LIBRE"
+    }
+  ],
+  "derrota": "DERROTA: EL CABALLERO HA CAIDO"
+}

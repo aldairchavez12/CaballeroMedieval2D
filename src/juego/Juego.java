@@ -1,77 +1,66 @@
-
 package juego;
 
-import entidades.Caballero;
-import entidades.Enemigo;
-import entidades.Boss;
-import entidades.Entidad;
-import escenario.Estructura;
+import entidades.*;
+import escenario.*;
+import items.*;
+import items.herramientas.*;
+import items.consumibles.*;
+import com.google.gson.*;
+import java.nio.file.*;
+import java.io.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import java.util.*;
+/** Control de partida: mismo contrato publico original, con recorrido lateral. */
 public class Juego {
 
-    public enum Estado {
-        INTRO,
-        JUGANDO,
-        ENTRE_CAPITULOS,
-        VICTORIA,
-        DERROTA
-    }
+    private final DatosJuego datos = new DatosJuego();
+    private final GestorNiveles gestorNiveles =
+        new GestorNiveles(datos);
+    public static final int ANCHO_NIVEL = 4800;
+    public static final int META_X = 4670;
+    public enum Estado { INTRO, JUGANDO, ENTRE_CAPITULOS, VICTORIA, DERROTA }
 
+    private static Juego instancia;
+    public static synchronized Juego getInstancia() {
+        if (instancia == null) instancia = new Juego();
+        return instancia;
+    }
+    private final GestorProyectiles gestorProyectiles = new GestorProyectiles();
+    private final GestorAliados gestorAliados =new GestorAliados();
+    private final GestorEnemigos gestorEnemigos;
+    private final GestorCombate gestorCombate;
     private final List<Entidad> entidades;
     private final List<Estructura> estructuras;
-
     private final Caballero caballero;
-    private Enemigo enemigo;
+    private final List<Enemigo> enemigos = new ArrayList<>();
 
+    private Enemigo enemigo;
     private Estado estado;
     private int capitulo;
 
-    // Posicion del enemigo en el escenario
-    private int enemigoX;
     private static final int ENEMIGO_Y = 550;
+    private final CreadorItems creadorItems = new CreadorItems(datos);
 
-    private static final int ANCHO_ENEMIGO = 45;
-    private static final int VELOCIDAD_ENEMIGO = 2;
-
-    private static final int DISTANCIA_DETECCION = 340;
-    private static final int DISTANCIA_ATAQUE_ENEMIGO = 65;
-    private static final int ALCANCE_CABALLERO = 90;
-
-    // Intervalos entre ataques
-    private static final long COOLDOWN_CABALLERO =
-            350_000_000L;
-
-    private static final long COOLDOWN_ENEMIGO =
-            1_200_000_000L;
-
-    private long ultimoAtaqueCaballero;
-    private long ultimoAtaqueEnemigo;
-
-    private int golpesEnemigo;
-
-    public Juego() {
-
+private Juego() {
         entidades = new ArrayList<>();
         estructuras = new ArrayList<>();
-
-        caballero = new Caballero(
-                "Caballero de Valdoria",
-                100,
-                15,
-                0,
-                null,
-                null
-        );
-
+        caballero = new Caballero("Caballero de Valdoria", 100, 15, 0, null, null);
         entidades.add(caballero);
-
+        gestorCombate = new GestorCombate(
+            caballero,
+            gestorProyectiles,
+            enemigos
+        );
+        gestorEnemigos = new GestorEnemigos(
+            caballero,
+            enemigos
+        );
+            
         capitulo = 1;
         estado = Estado.INTRO;
-
         prepararCapitulo();
+        caballero.cancelarHabilidad();
+        
     }
 
     public void iniciar() {
@@ -79,151 +68,263 @@ public class Juego {
         System.out.println("La Fortaleza Oscura");
     }
 
-    private void prepararCapitulo() {
 
-        entidades.removeIf(e -> e instanceof Enemigo);
+    public void reiniciarCapitulo() {
 
-        switch (capitulo) {
-
-            case 1:
-                enemigo = new Enemigo(
-                        "Goblin",
-                        45,
-                        7,
-                        10,
-                        2.0
-                );
-                break;
-
-            case 2:
-                enemigo = new Enemigo(
-                        "Guardia Oscuro",
-                        75,
-                        12,
-                        25,
-                        2.5
-                );
-                break;
-
-            case 3:
-                enemigo = new Boss(
-                        "Senor de las Sombras",
-                        120,
-                        16,
-                        100,
-                        2.0,
-                        14,
-                        1
-                );
-                break;
-
-            default:
-                enemigo = null;
-                return;
-        }
-
-        enemigoX = 850;
-        ultimoAtaqueCaballero = 0;
-        ultimoAtaqueEnemigo = 0;
-        golpesEnemigo = 0;
-
-        entidades.add(enemigo);
-    }
-
-    public void continuarHistoria() {
-
-        if (estado == Estado.INTRO) {
-
-            estado = Estado.JUGANDO;
-            System.out.println("Comienza el capitulo " + capitulo);
-
-        } else if (estado == Estado.ENTRE_CAPITULOS) {
-
-            capitulo++;
-            prepararCapitulo();
-
-            estado = Estado.INTRO;
-        }
-    }
-
-    public void actualizar() {
-
-        if (estado != Estado.JUGANDO) {
+        if (estado != Estado.DERROTA) {
             return;
         }
 
-        // El Caballero actualiza movimiento y gravedad
-        if (caballero.estaVivo()) {
-            caballero.update();
+        // Recuperar toda la vida del caballero
+        caballero.restaurarVida();
+        caballero.reiniciarMonedas();
+
+        // Volver a cargar enemigos y posiciones
+        prepararCapitulo();
+
+        // Reiniciar el estado de la partida
+        estado = Estado.JUGANDO;
+
+        System.out.println(
+            "Capitulo " + capitulo + " reiniciado."
+        );
+    }
+    public GestorAliados getGestorAliados() {
+        return gestorAliados;
+    }
+
+private void prepararCapitulo() {
+
+        gestorNiveles.generarCofres(creadorItems);
+        gestorNiveles.generarMonedas();
+        monedasRecogidasUltimaActualizacion = 0;
+
+        // Limpiar proyectiles del capitulo anterior
+        gestorProyectiles.limpiar();
+
+        estructuras.clear();
+
+        estructuras.add(
+            new Estructura("Barricada", 60, 520, 550)
+        );
+
+        estructuras.add(
+            new Estructura("Caja de madera", 40, 1250, 570)
+        );
+
+        // Reiniciar posicion del jugador
+        caballero.configurarLimiteMovimiento(ANCHO_NIVEL);
+        caballero.reiniciarPosicion();
+
+        // Cargar enemigos y posiciones desde JSON
+        enemigo = gestorNiveles.cargarCapitulo(
+            capitulo,
+            entidades,
+            enemigos
+        );
+
+        // Mantener compatibilidad con PanelJuego
+        
+
+        // Reiniciar los sistemas de combate
+        gestorCombate.reiniciar();
+        gestorEnemigos.reiniciar();
+        gestorAliados.reiniciar();
+
+        // Reiniciar habilidades temporales
+        caballero.cancelarHabilidad();
+    }
+
+public Item crearObjeto(String id) {
+        return creadorItems.crear(id);
+    }
+
+    public static final int COSTO_CURACION = 5;
+    public static final int PUNTOS_CURACION = 40;
+
+    public enum ResultadoCompra {
+
+        EXITOSA,
+        SALDO_INSUFICIENTE,
+        VIDA_COMPLETA,
+        NO_DISPONIBLE
+    }
+
+    public ResultadoCompra comprarCuracion() {
+
+        if (!estaActivo() || !caballero.estaVivo()) {
+
+            return ResultadoCompra.NO_DISPONIBLE;
         }
 
-        if (enemigo != null && enemigo.estaVivo()) {
-            actualizarIAEnemigo();
+        if (caballero.getVida()
+                >= caballero.getVidaMaxima()) {
+
+            return ResultadoCompra.VIDA_COMPLETA;
         }
 
-        if (!caballero.estaVivo()) {
-            estado = Estado.DERROTA;
-            System.out.println("El Caballero ha sido derrotado.");
+        if (!caballero.gastarMonedas(COSTO_CURACION)) {
+
+            return ResultadoCompra.SALDO_INSUFICIENTE;
+        }
+
+        caballero.curar(PUNTOS_CURACION);
+
+        return ResultadoCompra.EXITOSA;
+    }
+
+    public void recogerMonedas(int cantidad) {
+
+        if (estaActivo() && caballero.estaVivo()) {
+
+            caballero.agregarMonedas(cantidad);
         }
     }
 
-    private void actualizarIAEnemigo() {
+    private int monedasRecogidasUltimaActualizacion;
 
-        int centroCaballero =
-                caballero.getX() + Caballero.ANCHO / 2;
+    public List<Moneda> getMonedasNivel() {
 
-        int centroEnemigo =
-                enemigoX + ANCHO_ENEMIGO / 2;
+        return gestorNiveles.getMonedas();
+    }
 
-        int diferencia = centroCaballero - centroEnemigo;
+    public int consumirMonedasRecogidas() {
 
-        int distancia = Math.abs(diferencia);
+        int cantidad =
+            monedasRecogidasUltimaActualizacion;
 
-        // El enemigo persigue al jugador cuando lo detecta.
-        if (distancia <= DISTANCIA_DETECCION
-                && distancia > DISTANCIA_ATAQUE_ENEMIGO) {
+        monedasRecogidasUltimaActualizacion = 0;
 
-            int direccion = Integer.compare(diferencia, 0);
+        return cantidad;
+    }
 
-            enemigoX += direccion * VELOCIDAD_ENEMIGO;
+    private void actualizarMonedasNivel() {
 
-            enemigoX = Math.max(
-                    0,
-                    Math.min(1280 - ANCHO_ENEMIGO, enemigoX)
+        if (!estaActivo() || !caballero.estaVivo()) {
+            return;
+        }
+
+        int cantidad =
+            gestorNiveles.recogerMonedas(caballero);
+
+        if (cantidad > 0) {
+
+            caballero.agregarMonedas(cantidad);
+
+            monedasRecogidasUltimaActualizacion
+                += cantidad;
+        }
+    }
+
+    public int getMonedas() {
+        return caballero.getMonedas();
+    }
+
+    public List<Cofre> getCofres() {
+        return gestorNiveles.getCofres();
+    }
+
+    public String abrirCofreCercano() {
+
+        if (!estaActivo() || !caballero.estaVivo()) {
+            return "";
+        }
+
+        Cofre cofre = gestorNiveles.buscarCofreCercano(
+            caballero.getX(),
+            caballero.getY()
+        );
+
+        if (cofre == null) {
+            return "";
+        }
+
+        if (!cofre.abrir(caballero.getInventario())) {
+
+            return "INVENTARIO LLENO";
+        }
+
+        caballero.agregarMonedas(2);
+
+        return "OBTUVISTE: "
+            + cofre.getNombreContenido();
+    }
+
+    public Inventario getInventario() {
+        return caballero.getInventario();
+    }
+
+    public boolean recogerItem(Item item) {
+        return caballero.getInventario().agregarItem(item);
+    }
+
+public boolean usarItem(int indice) {
+
+        if (estado != Estado.JUGANDO) {
+            return false;
+        }
+
+        return caballero.usarObjeto(indice);
+    }
+
+
+    public void continuarHistoria() {
+        if (estado == Estado.INTRO) {
+            estado = Estado.JUGANDO;
+            System.out.println("Comienza el capitulo " + capitulo);
+        } else if (estado == Estado.ENTRE_CAPITULOS
+            && enemigosDerrotados()) {capitulo++;
+            prepararCapitulo();
+            estado = Estado.INTRO;
+        }
+            
+        
+    }
+
+    public void actualizar() {
+        if (estado != Estado.JUGANDO) return;
+        if (caballero.estaVivo()) {
+            caballero.update();
+            actualizarMonedasNivel();
+        }
+        caballero.actualizarHabilidad();
+        gestorEnemigos.actualizar();
+        if (!caballero.estaVivo()) {
+            estado = Estado.DERROTA;
+            System.out.println("El Caballero ha sido derrotado.");
+            return;
+        }
+        
+        if (enemigosDerrotados()
+                && caballero.getX() >= META_X - 60) {
+
+            estado = capitulo == 3
+                    ? Estado.VICTORIA
+                    : Estado.ENTRE_CAPITULOS;
+
+            System.out.println(
+                capitulo == 3
+                    ? "Victoria: Valdoria ha sido liberada."
+                    : "Capitulo completado: " + capitulo
             );
         }
 
-        // Comprobar si el jugador está a una altura atacable.
-        boolean alturaCompatible =
-                Math.abs(caballero.getY() - ENEMIGO_Y) < 55;
+        gestorProyectiles.actualizar(
+            enemigos,
+            ENEMIGO_Y,
+            estructuras
+        );
+        gestorAliados.actualizar(
+            caballero,
+            enemigos
+        );
+    }
+    public GestorProyectiles getGestorProyectiles() {
+     return gestorProyectiles;
+    }
 
-        if (distancia <= DISTANCIA_ATAQUE_ENEMIGO
-                && alturaCompatible
-                && caballero.estaVivo()) {
-
-            long ahora = System.nanoTime();
-
-            if (ahora - ultimoAtaqueEnemigo >= COOLDOWN_ENEMIGO) {
-
-                golpesEnemigo++;
-
-                // El Boss usa un ataque especial cada 3 golpes
-                if (enemigo instanceof Boss && golpesEnemigo % 3 == 0) {
-
-                    ((Boss) enemigo).ataqueEspecial(caballero);
-
-                } else {
-
-                    enemigo.atacar(caballero);
-                }
-
-                ultimoAtaqueEnemigo = ahora;
-
-                System.out.println(
-                        "Vida del Caballero: " + caballero.getVida()
-                );
-            }
-        }
+    public List<Estructura> getEstructuras() {
+        return Collections.unmodifiableList(estructuras);
     }
 
     public void atacarEnemigo() {
@@ -232,147 +333,77 @@ public class Juego {
             return;
         }
 
-        if (!caballero.estaVivo()
-                || enemigo == null
-                || !enemigo.estaVivo()) {
-            return;
-        }
+        Enemigo objetivo = gestorCombate.atacar(estructuras);
 
-        long ahora = System.nanoTime();
+        if (objetivo != null) {
 
-        if (ahora - ultimoAtaqueCaballero < COOLDOWN_CABALLERO) {
-            return;
-        }
+            enemigo = objetivo;
 
-        int centroCaballero =
-                caballero.getX() + Caballero.ANCHO / 2;
-
-        int centroEnemigo =
-                enemigoX + ANCHO_ENEMIGO / 2;
-
-        int distancia =
-                Math.abs(centroCaballero - centroEnemigo);
-
-        boolean alturaCompatible =
-                Math.abs(caballero.getY() - ENEMIGO_Y) < 60;
-
-        if (distancia <= ALCANCE_CABALLERO
-                && alturaCompatible) {
-
-            caballero.atacar(enemigo);
-
-            ultimoAtaqueCaballero = ahora;
-
-            System.out.println(
-                    enemigo.getNombre()
-                    + " - Vida: "
-                    + enemigo.getVida()
-            );
-
-            if (!enemigo.estaVivo()) {
-
-                if (capitulo == 3) {
-
-                    estado = Estado.VICTORIA;
-
-                    System.out.println(
-                            "Victoria: Valdoria ha sido liberada."
-                    );
-
-                } else {
-
-                    estado = Estado.ENTRE_CAPITULOS;
-
-                    System.out.println(
-                            "Capitulo completado: " + capitulo
-                    );
-                }
-            }
+            
         }
     }
 
     public String getTituloCapitulo() {
-
-        switch (capitulo) {
-
-            case 1:
-                return "CAPITULO I - BOSQUE DE LAS SOMBRAS";
-
-            case 2:
-                return "CAPITULO II - FORTALEZA ABANDONADA";
-
-            case 3:
-                return "CAPITULO III - TRONO DE LA OSCURIDAD";
-
-            default:
-                return "";
-        }
+        return gestorNiveles.obtenerTitulo(capitulo);
     }
 
+    
     public String getMensajeHistoria() {
 
         if (estado == Estado.VICTORIA) {
-            return "VICTORIA: EL REINO DE VALDORIA ES LIBRE";
+            return datos.obtenerHistoria(capitulo)
+                    .get("final").getAsString();
         }
 
         if (estado == Estado.DERROTA) {
-            return "DERROTA: EL CABALLERO HA CAIDO";
+            return datos.obtenerMensajeDerrota();
         }
 
         if (estado == Estado.ENTRE_CAPITULOS) {
-            return "ENEMIGO DERROTADO - ENTER PARA CONTINUAR";
+            return "PUERTA ABIERTA - ENTER PARA CONTINUAR";
         }
 
         if (estado == Estado.INTRO) {
-
-            switch (capitulo) {
-
-                case 1:
-                    return "Derrota al Goblin. ENTER para comenzar.";
-
-                case 2:
-                    return "La fortaleza te espera. ENTER para comenzar.";
-
-                case 3:
-                    return "Enfrenta al Senor Oscuro. ENTER para comenzar.";
-
-                default:
-                    return "";
-            }
+            return datos.obtenerHistoria(capitulo)
+                    .get("inicio").getAsString();
         }
 
         return "";
     }
 
-    public void finalizar() {
-        estado = Estado.DERROTA;
+    public Pocima crearPocimaVida() {
+
+        JsonObject configuracion = datos.obtenerItem("pocima_vida");
+        return new Pocima(
+            configuracion.get("nombre").getAsString(),
+            configuracion.get("descripcion").getAsString(),
+            configuracion.get("cantidad").getAsInt(),
+            configuracion.get("curacion").getAsInt(),
+            configuracion.get("efecto").getAsString()
+        );
     }
 
-    public boolean estaActivo() {
-        return estado == Estado.JUGANDO;
-    }
-
-    public Estado getEstado() {
-        return estado;
-    }
-
-    public int getCapitulo() {
-        return capitulo;
-    }
-
-    public Caballero getCaballero() {
-        return caballero;
-    }
-
-    public Enemigo getEnemigo() {
-        return enemigo;
-    }
-
+    public void finalizar() { estado = Estado.DERROTA; }
+    public boolean estaActivo() { return estado == Estado.JUGANDO; }
+    public Estado getEstado() { return estado; }
+    public int getCapitulo() { return capitulo; }
+    public Caballero getCaballero() { return caballero; }
+    public Enemigo getEnemigo() { return enemigo; }
     public int getEnemigoX() {
-        return enemigoX;
+        return enemigo == null ? 0 : enemigo.getX();
     }
-
-    public int getEnemigoY() {
-        return ENEMIGO_Y;
+    public int getEnemigoY() { return ENEMIGO_Y; }
+    // Consultas adicionales para representar el nivel sin modificar Entidad/Enemigo/Boss.
+    public List<Enemigo> getEnemigos() { return Collections.unmodifiableList(enemigos); }
+    public int getPosicionEnemigo(Enemigo e) { return e == null || !enemigos.contains(e)
+            ? -100 : e.getX(); }
+    public boolean enemigosDerrotados() {
+        for (Enemigo e : enemigos) if (e.estaVivo()) return false;
+        return true;
+    }
+    public int getEnemigosRestantes() {
+        int restantes = 0;
+        for (Enemigo e : enemigos) if (e.estaVivo()) restantes++;
+        return restantes;
     }
 }
