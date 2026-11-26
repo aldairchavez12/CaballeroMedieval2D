@@ -1,6 +1,9 @@
 
 package juego;
 
+import escenario.Moneda;
+import entidades.Caballero;
+
 import escenario.Cofre;
 import java.util.Random;
 import java.util.Collections;
@@ -18,6 +21,47 @@ import java.util.List;
 import java.util.Map;
 
 public class GestorNiveles {
+
+    private final List<Moneda> monedas =
+        new ArrayList<>();
+
+    public void generarMonedas() {
+
+        monedas.clear();
+
+        monedas.add(new Moneda(320, 565, 1));
+        monedas.add(new Moneda(950, 565, 1));
+        monedas.add(new Moneda(1700, 565, 1));
+        monedas.add(new Moneda(2540, 565, 1));
+        monedas.add(new Moneda(3450, 565, 1));
+        monedas.add(new Moneda(4450, 565, 1));
+    }
+
+    public List<Moneda> getMonedas() {
+
+        return Collections.unmodifiableList(monedas);
+    }
+
+    public int recogerMonedas(Caballero caballero) {
+
+        if (!caballero.estaVivo()) return 0;
+
+        int total = 0;
+
+        for (Moneda moneda : monedas) {
+
+            total += moneda.recoger(
+                caballero.getX(),
+                caballero.getY(),
+                Caballero.ANCHO,
+                Caballero.ALTO
+            );
+        }
+
+        return total;
+    }
+
+    
 
     private final List<Cofre> cofres = new ArrayList<>();
 

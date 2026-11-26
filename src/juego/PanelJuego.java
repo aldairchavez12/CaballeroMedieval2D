@@ -28,7 +28,7 @@ public class PanelJuego extends JPanel {
     private static final int ANCHO = 1280;
     private static final int ALTO = 720;
     private static final int SUELO_Y = 620;
-    private static final int TOTAL_MONEDAS = 6;
+
     private boolean inventarioAbierto = false;
 
     private final Juego juego;
@@ -41,9 +41,6 @@ public class PanelJuego extends JPanel {
     private int capituloVisual;
     private int camaraX;
     private int zonaVisual = -1;
-
-    private final boolean[] monedasRecogidas = new boolean[TOTAL_MONEDAS];
-    private final int[][] posicionesMonedas = {{320,565}, {950,565}, {1700,565}, {2540,565}, {3450,565}, {4450,565}};
 
 private int avisoDuracion;
     private String aviso = "";
@@ -394,10 +391,6 @@ private int avisoDuracion;
 
         juego.reiniciarCapitulo();
 
-        java.util.Arrays.fill(
-            monedasRecogidas, false
-        );
-
 camaraX = 0;
         zonaVisual = -1;
 
@@ -454,7 +447,7 @@ camaraX = 0;
 
         if (juego.getCapitulo() != capituloVisual) {
             capituloVisual = juego.getCapitulo();
-            for (int i = 0; i < monedasRecogidas.length; i++) monedasRecogidas[i] = false;
+            
             
             camaraX = 0;
             zonaVisual = -1;
@@ -473,7 +466,7 @@ camaraX = 0;
             juego.getCaballero().establecerDireccion(direccion);
 
             juego.actualizar();
-            actualizarMonedas();
+            notificarMonedasRecogidas();
             camaraX = Math.max(0, Math.min(Juego.ANCHO_NIVEL - ANCHO,
                     juego.getCaballero().getX() - ANCHO / 3));
             int nuevaZona = Math.min(3, juego.getCaballero().getX() / 1200);
@@ -501,18 +494,18 @@ camaraX = 0;
         avisoDuracion = 130;
     }
 
-    private void actualizarMonedas() {
-        Caballero c = juego.getCaballero();
-        Rectangle jugador = new Rectangle(c.getX(), c.getY(), Caballero.ANCHO, Caballero.ALTO);
-        for (int i = 0; i < TOTAL_MONEDAS; i++) {
-            if (!monedasRecogidas[i]) {
-                Rectangle moneda = new Rectangle(posicionesMonedas[i][0], posicionesMonedas[i][1], 22, 28);
-                if (jugador.intersects(moneda)) {
-                    monedasRecogidas[i] = true;
-                    juego.recogerMonedas(1);
-                    avisar("+1 MONEDA");
-                }
-            }
+    private void notificarMonedasRecogidas() {
+
+        int cantidad = juego.consumirMonedasRecogidas();
+
+        if (cantidad > 0) {
+
+            avisar(
+                "+" + cantidad
+                + (cantidad == 1
+                    ? " MONEDA"
+                    : " MONEDAS")
+            );
         }
     }
 
@@ -554,8 +547,7 @@ private void abrirCofre() {
         );
         renderizadorEscenario.dibujarMonedas(
             mundo,
-            posicionesMonedas,
-            monedasRecogidas,
+            juego.getMonedasNivel(),
             fotograma
         );
         renderizadorEscenario.dibujarCofre(

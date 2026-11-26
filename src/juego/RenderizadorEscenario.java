@@ -1,5 +1,7 @@
 package juego;
 
+import escenario.Moneda;
+
 import java.awt.*;
 import java.util.List;
 import escenario.Estructura;
@@ -178,17 +180,32 @@ public final class RenderizadorEscenario {
 
     public void dibujarMonedas(
             Graphics2D g,
-            int[][] posicionesMonedas,
-            boolean[] monedasRecogidas,
+            List<Moneda> monedas,
             int fotograma) {
-        for (int i = 0; i < posicionesMonedas.length; i++) {
-            if (monedasRecogidas[i]) continue;
-            int x = posicionesMonedas[i][0];
-            int y = posicionesMonedas[i][1] + (int) (3 * Math.sin(fotograma * 0.08 + i));
+
+        for (int i = 0; i < monedas.size(); i++) {
+
+            Moneda moneda = monedas.get(i);
+
+            if (moneda.estaRecogida()) continue;
+
+            int x = moneda.getX();
+
+            int y = moneda.getY()
+                + (int) (3 * Math.sin(
+                    fotograma * 0.08 + i
+                ));
+
             g.setColor(new Color(130, 73, 12));
             g.fillOval(x - 2, y - 2, 26, 32);
+
             g.setColor(new Color(255, 193, 37));
-            g.fillOval(x, y, 22, 28);
+            g.fillOval(
+                x, y,
+                Moneda.ANCHO,
+                Moneda.ALTO
+            );
+
             g.setColor(new Color(255, 239, 157));
             g.fillOval(x + 6, y + 5, 9, 17);
         }

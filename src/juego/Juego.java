@@ -105,6 +105,8 @@ public class Juego {
     private void prepararCapitulo() {
 
         gestorNiveles.generarCofres(creadorItems);
+        gestorNiveles.generarMonedas();
+        monedasRecogidasUltimaActualizacion = 0;
 
         // Limpiar proyectiles del capitulo anterior
         gestorProyectiles.limpiar();
@@ -192,6 +194,41 @@ public class Juego {
         }
     }
 
+    private int monedasRecogidasUltimaActualizacion;
+
+    public List<Moneda> getMonedasNivel() {
+
+        return gestorNiveles.getMonedas();
+    }
+
+    public int consumirMonedasRecogidas() {
+
+        int cantidad =
+            monedasRecogidasUltimaActualizacion;
+
+        monedasRecogidasUltimaActualizacion = 0;
+
+        return cantidad;
+    }
+
+    private void actualizarMonedasNivel() {
+
+        if (!estaActivo() || !caballero.estaVivo()) {
+            return;
+        }
+
+        int cantidad =
+            gestorNiveles.recogerMonedas(caballero);
+
+        if (cantidad > 0) {
+
+            caballero.agregarMonedas(cantidad);
+
+            monedasRecogidasUltimaActualizacion
+                += cantidad;
+        }
+    }
+
     public int getMonedas() {
         return caballero.getMonedas();
     }
@@ -261,7 +298,10 @@ public class Juego {
 
     public void actualizar() {
         if (estado != Estado.JUGANDO) return;
-        if (caballero.estaVivo()) caballero.update();
+        if (caballero.estaVivo()) {
+            caballero.update();
+            actualizarMonedasNivel();
+        }
         caballero.actualizarHabilidad();
         gestorEnemigos.actualizar();
         if (!caballero.estaVivo()) {
