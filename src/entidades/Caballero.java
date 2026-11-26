@@ -6,7 +6,7 @@ import items.Item;
 import items.consumibles.Consumible;
 import java.util.List;
 import items.herramientas.*;
-import juego.Juego;
+
 
 public class Caballero extends Entidad {
     private int bonoAtaque = 0;
@@ -18,6 +18,7 @@ public class Caballero extends Entidad {
     private int x;
     private int y;
     private int direccion;
+    private int limiteMovimientoX = Integer.MAX_VALUE;
     private double velocidadVertical;
     private boolean enSuelo;
     private static final int VELOCIDAD = 5;
@@ -28,6 +29,8 @@ public class Caballero extends Entidad {
     private Armadura armaduraEquipada;
     private Escudo escudoEquipado;
     private boolean mirandoDerecha = true;
+    private LanzadorProyectiles lanzadorProyectiles;
+
     private AtaqueStrategy estrategiaAtaque = new AtaqueStrategy.Basico();
     private final Inventario inventario = new Inventario(12);
     public Caballero(String nombre, int vida, int ataqueBase, int experiencia, Herramienta arma, Herramienta defensa) {
@@ -100,7 +103,7 @@ public class Caballero extends Entidad {
             enSuelo = false;
         }
         // Unico ajuste de una regla existente: nivel largo, no pantalla de 1280 px.
-        x = Math.max(0, Math.min(x, Juego.ANCHO_NIVEL - ANCHO));
+        x = Math.max(0, Math.min(x, limiteMovimientoX));
     }
 
     @Override
@@ -121,9 +124,8 @@ public class Caballero extends Entidad {
     }   
      @Override
     public void atacar(Atacable objetivo) {
-        if (objetivo != null) {
-            estrategiaAtaque.ejecutar(this, objetivo);
-        }
+
+        ejecutarAtaque(objetivo);
     }
     public void verificarArma() {
 
@@ -138,18 +140,22 @@ public class Caballero extends Entidad {
         return estrategiaAtaque.esAtaqueDistancia();
     }
 
-    public boolean ejecutarAtaque(
-            Atacable objetivo,
+    public void configurarLanzador(
             LanzadorProyectiles lanzador) {
+
+        this.lanzadorProyectiles = lanzador;
+    }
+
+    public boolean ejecutarAtaque(Atacable objetivo) {
 
         if (!estaVivo()) return false;
 
         verificarArma();
 
-        return estrategiaAtaque.ejecutarAtaque(
+        return estrategiaAtaque.ejecutar(
             this,
             objetivo,
-            lanzador
+            lanzadorProyectiles
         );
     }
 
@@ -374,6 +380,21 @@ public class Caballero extends Entidad {
     public int getExperiencia() { return experiencia; }
 
     // Extension minima: reinicio entre capitulos. No elimina ningun metodo UML.
+    public void configurarLimiteMovimiento(int anchoNivel) {
+
+        if (anchoNivel < ANCHO) {
+            throw new IllegalArgumentException(
+                "El nivel es demasiado pequeno."
+            );
+        }
+
+        limiteMovimientoX = anchoNivel - ANCHO;
+
+        x = Math.max(
+            0, Math.min(x, limiteMovimientoX)
+        );
+    }
+
     public void reiniciarPosicion() {
         x = 100;
         y = 550;

@@ -113,6 +113,7 @@ private void prepararCapitulo() {
         );
 
         // Reiniciar posicion del jugador
+        caballero.configurarLimiteMovimiento(ANCHO_NIVEL);
         caballero.reiniciarPosicion();
 
         // Cargar enemigos y posiciones desde JSON

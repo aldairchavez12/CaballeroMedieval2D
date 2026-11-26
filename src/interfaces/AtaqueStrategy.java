@@ -8,9 +8,10 @@ import items.herramientas.Flecha;
 
 public interface AtaqueStrategy {
 
-    void ejecutar(
+    boolean ejecutar(
         Caballero caballero,
-        Atacable objetivo
+        Atacable objetivo,
+        LanzadorProyectiles lanzador
     );
 
     int getAlcance();
@@ -19,44 +20,43 @@ public interface AtaqueStrategy {
         return false;
     }
 
-    default boolean ejecutarAtaque(
-            Caballero caballero,
-            Atacable objetivo,
-            LanzadorProyectiles lanzador) {
+    // ========================================
+    // ATAQUE BASICO
+    // ========================================
 
-        if (objetivo == null) {
-            return false;
-        }
+    final class Basico implements AtaqueStrategy {
 
-        ejecutar(caballero, objetivo);
-        return true;
-    }
-
-    class Basico implements AtaqueStrategy {
-
-        private static final int DANIO_PUNOS = 5;
-        private static final int ALCANCE_PUNOS = 45;
+        private static final int DANIO = 5;
+        private static final int ALCANCE = 45;
 
         @Override
-        public void ejecutar(
-                Caballero caballero,
-                Atacable objetivo) {
+        public boolean ejecutar(
+                Caballero c,
+                Atacable objetivo,
+                LanzadorProyectiles lanzador) {
 
-            if (objetivo == null) return;
+            if (!c.estaVivo() || objetivo == null) {
+                return false;
+            }
 
             objetivo.recibirDanio(
-                DANIO_PUNOS
-                + caballero.getBonoAtaque()
+                DANIO + c.getBonoAtaque()
             );
+
+            return true;
         }
 
         @Override
         public int getAlcance() {
-            return ALCANCE_PUNOS;
+            return ALCANCE;
         }
     }
 
-    class ConEspada implements AtaqueStrategy {
+    // ========================================
+    // ATAQUE CON ESPADA
+    // ========================================
+
+    final class ConEspada implements AtaqueStrategy {
 
         private final Espada espada;
 
@@ -65,16 +65,16 @@ public interface AtaqueStrategy {
         }
 
         @Override
-        public void ejecutar(
+        public boolean ejecutar(
                 Caballero c,
-                Atacable objetivo) {
+                Atacable objetivo,
+                LanzadorProyectiles lanzador) {
 
-            if (objetivo == null) return;
+            if (!c.estaVivo()
+                    || objetivo == null
+                    || espada.getDurabilidad() <= 0) {
 
-            if (espada.getDurabilidad() <= 0) {
-
-                new Basico().ejecutar(c, objetivo);
-                return;
+                return false;
             }
 
             objetivo.recibirDanio(
@@ -83,6 +83,8 @@ public interface AtaqueStrategy {
             );
 
             espada.usar(c);
+
+            return true;
         }
 
         @Override
@@ -91,7 +93,11 @@ public interface AtaqueStrategy {
         }
     }
 
-    class ConArco implements AtaqueStrategy {
+    // ========================================
+    // ATAQUE CON ARCO
+    // ========================================
+
+    final class ConArco implements AtaqueStrategy {
 
         private final Arco arco;
 
@@ -105,22 +111,15 @@ public interface AtaqueStrategy {
         }
 
         @Override
-        public void ejecutar(
-                Caballero c,
-                Atacable objetivo) {
-
-            // Un arco necesita un lanzador de proyectiles.
-            // No aplica danio directo al objetivo.
-        }
-
-        @Override
-        public boolean ejecutarAtaque(
+        public boolean ejecutar(
                 Caballero c,
                 Atacable objetivo,
                 LanzadorProyectiles lanzador) {
 
-            if (lanzador == null
+            if (!c.estaVivo()
+                    || lanzador == null
                     || arco.getDurabilidad() <= 0) {
+
                 return false;
             }
 
@@ -133,7 +132,8 @@ public interface AtaqueStrategy {
                 return false;
             }
 
-            int direccion = c.miraDerecha() ? 1 : -1;
+            int direccion =
+                c.miraDerecha() ? 1 : -1;
 
             double origenX = c.getX()
                 + (direccion > 0

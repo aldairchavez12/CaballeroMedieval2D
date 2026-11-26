@@ -1,18 +1,12 @@
 package juego;
 
-import entidades.*;
-import escenario.Estructura;
-import items.*;
-import items.consumibles.*;
-import items.herramientas.*;
+import items.Item;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.*;
 import java.util.List;
-import java.util.Random;
-import java.awt.geom.AffineTransform;
+
 /**
  * Presentacion y controles del juego. Conserva el contrato con Juego,
  * Caballero, Enemigo, Boss e interfaces del UML original.
@@ -23,7 +17,6 @@ public class PanelJuego extends JPanel {
     private static final int SLOTS_HOTBAR = 9;
 
     private int slotSeleccionado = 0;
-    private boolean mirandoDerecha = true;
 
     private static final int ANCHO = 1280;
     private static final int ALTO = 720;
@@ -42,14 +35,11 @@ public class PanelJuego extends JPanel {
     private int camaraX;
     private int zonaVisual = -1;
 
-private int avisoDuracion;
+    private int avisoDuracion;
     private String aviso = "";
     private int efectoAtaque;
-    private int vidaAnterior;
-    private int efectoDanio;
-    private int enemigoVidaAnterior;
-    private final Random efectos = new Random(2026);
 
+    private int efectoDanio;
 
     private final APIClient apiClient = new APIClient();
 
@@ -90,8 +80,6 @@ private int avisoDuracion;
         // Singleton: el constructor de Juego es privado.
         juego = Juego.getInstancia();
         capituloVisual = juego.getCapitulo();
-        vidaAnterior = juego.getCaballero().getVida();
-        enemigoVidaAnterior = juego.getEnemigo() == null ? 0 : juego.getEnemigo().getVida();
 
         juego.getCaballero().agregarObservador(evento -> {
 
@@ -112,7 +100,6 @@ private int avisoDuracion;
 
             repaint();
         });
-
 
         configurarControles();
         gameLoop = new Timer(16, e -> actualizarPantalla());
@@ -141,89 +128,54 @@ private int avisoDuracion;
         ControladorEntrada entrada =
             new ControladorEntrada(this);
 
-        entrada.registrarTecla(
-            "pressed A", "izquierdaOn",
-            () -> izquierda = puedeJugar()
-        );
+        entrada.registrarTecla("pressed A",
+            "izquierdaOn", () -> izquierda = puedeJugar());
 
-        entrada.registrarTecla(
-            "released A", "izquierdaOff",
-            () -> izquierda = false
-        );
+        entrada.registrarTecla("released A",
+            "izquierdaOff", () -> izquierda = false);
 
-        entrada.registrarTecla(
-            "pressed D", "derechaOn",
-            () -> derecha = puedeJugar()
-        );
+        entrada.registrarTecla("pressed D",
+            "derechaOn", () -> derecha = puedeJugar());
 
-        entrada.registrarTecla(
-            "released D", "derechaOff",
-            () -> derecha = false
-        );
+        entrada.registrarTecla("released D",
+            "derechaOff", () -> derecha = false);
 
-        entrada.registrarTecla(
-            "pressed SPACE", "saltar",
+        entrada.registrarTecla("pressed SPACE", "saltar",
             () -> {
                 if (puedeJugar()) {
                     juego.getCaballero().saltar();
                 }
-            }
-        );
+            });
 
-        entrada.registrarTecla(
-            "pressed J", "atacar",
-            this::ejecutarAtaque
-        );
+        entrada.registrarTecla("pressed J",
+            "atacar", this::ejecutarAtaque);
 
-        entrada.registrarTecla(
-            "pressed E", "interactuar",
-            () -> {
-                if (puedeJugar()) abrirCofre();
-            }
-        );
+        entrada.registrarTecla("pressed E",
+            "interactuar", this::abrirCofre);
 
-        entrada.registrarTecla(
-            "pressed ENTER", "continuar",
-            this::continuarPartida
-        );
+        entrada.registrarTecla("pressed ENTER",
+            "continuar", this::continuarPartida);
 
-        entrada.registrarTecla(
-            "pressed ESCAPE", "pausar",
-            this::alternarPausa
-        );
+        entrada.registrarTecla("pressed ESCAPE",
+            "pausar", this::alternarPausa);
 
-        entrada.registrarTecla(
-            "pressed R", "reintentar",
-            this::reintentarPartida
-        );
+        entrada.registrarTecla("pressed R",
+            "reintentar", this::reintentarPartida);
 
-        entrada.registrarTecla(
-            "pressed X", "eliminarItem",
-            this::eliminarSeleccionado
-        );
+        entrada.registrarTecla("pressed X",
+            "eliminarItem", this::eliminarSeleccionado);
 
-        entrada.registrarTecla(
-            "pressed H", "comprarCuracion",
-            this::comprarCuracion
-        );
+        entrada.registrarTecla("pressed H",
+            "comprarCuracion", this::comprarCuracion);
 
-        entrada.registrarTecla(
-            "pressed I", "abrirInventario",
-            this::alternarInventario
-        );
+        entrada.registrarTecla("pressed I",
+            "abrirInventario", this::alternarInventario);
 
         entrada.registrarSeleccion(
-            SLOTS_HOTBAR,
-            this::seleccionarObjeto
-        );
+            SLOTS_HOTBAR, this::seleccionarObjeto);
 
-        entrada.registrarRueda(
-            this::desplazarSeleccion
-        );
-
-        entrada.registrarClic(
-            this::procesarClic
-        );
+        entrada.registrarRueda(this::desplazarSeleccion);
+        entrada.registrarClic(this::procesarClic);
     }
 
     private boolean puedeJugar() {
@@ -404,9 +356,6 @@ camaraX = 0;
         efectoAtaque = 0;
         efectoDanio = 0;
 
-        vidaAnterior =
-            juego.getCaballero().getVida();
-
         avisar("CAPITULO REINICIADO");
 
         repaint();
@@ -440,54 +389,93 @@ camaraX = 0;
     }
 
     private void actualizarPantalla() {
+
         fotograma++;
+
         if (avisoDuracion > 0) avisoDuracion--;
         if (efectoAtaque > 0) efectoAtaque--;
         if (efectoDanio > 0) efectoDanio--;
 
-        if (juego.getCapitulo() != capituloVisual) {
-            capituloVisual = juego.getCapitulo();
-            
-            
-            camaraX = 0;
-            zonaVisual = -1;
-            avisar("NUEVO CAPITULO: " + capituloVisual);
-        }
+        actualizarCambioCapitulo();
 
-        if (!pausado && !inventarioAbierto && juego.estaActivo()) {
-            int direccion = (derecha ? 1 : 0) - (izquierda ? 1 : 0);
+        if (puedeJugar()) {
 
-            if (direccion > 0) {
-                mirandoDerecha = true;
-            } else if (direccion < 0) {
-                mirandoDerecha = false;
-            }
+            int direccion =
+                (derecha ? 1 : 0)
+                - (izquierda ? 1 : 0);
 
-            juego.getCaballero().establecerDireccion(direccion);
+            juego.getCaballero()
+                .establecerDireccion(direccion);
 
             juego.actualizar();
+
             notificarMonedasRecogidas();
-            camaraX = Math.max(0, Math.min(Juego.ANCHO_NIVEL - ANCHO,
-                    juego.getCaballero().getX() - ANCHO / 3));
-            int nuevaZona = Math.min(3, juego.getCaballero().getX() / 1200);
-            if (nuevaZona != zonaVisual) {
-                zonaVisual = nuevaZona;
-                if (nuevaZona == 1) avisar("LAS SOMBRAS CRECEN... PROTEGE EL REINO");
-                else if (nuevaZona == 2) avisar("LOS GUARDIANES VIGILAN ESTE CAMINO");
-                else if (nuevaZona == 3) avisar("LA PUERTA DEL DESTINO ESTA CERCA");
-            }
+            actualizarCamara();
+            actualizarZona();
+
         } else {
-            juego.getCaballero().establecerDireccion(0);
+
+            juego.getCaballero()
+                .establecerDireccion(0);
         }
 
-        int vidaActual = juego.getCaballero().getVida();
-        if (vidaActual < vidaAnterior) efectoDanio = 14;
-        vidaAnterior = vidaActual;
-        Enemigo enemigo = juego.getEnemigo();
-        if (enemigo != null) enemigoVidaAnterior = enemigo.getVida();
         repaint();
+    }
 
-}
+    private void actualizarCambioCapitulo() {
+
+        if (juego.getCapitulo() == capituloVisual) {
+            return;
+        }
+
+        capituloVisual = juego.getCapitulo();
+        camaraX = 0;
+        zonaVisual = -1;
+
+        avisar("NUEVO CAPITULO: " + capituloVisual);
+    }
+
+    private void actualizarCamara() {
+
+        int posicion = juego.getCaballero().getX();
+
+        camaraX = Math.max(
+            0,
+            Math.min(
+                Juego.ANCHO_NIVEL - ANCHO,
+                posicion - ANCHO / 3
+            )
+        );
+    }
+
+    private void actualizarZona() {
+
+        int nuevaZona = Math.min(
+            3, juego.getCaballero().getX() / 1200
+        );
+
+        if (nuevaZona == zonaVisual) return;
+
+        zonaVisual = nuevaZona;
+
+        switch (zonaVisual) {
+
+            case 1:
+                avisar("LAS SOMBRAS CRECEN... PROTEGE EL REINO");
+                break;
+
+            case 2:
+                avisar("LOS GUARDIANES VIGILAN ESTE CAMINO");
+                break;
+
+            case 3:
+                avisar("LA PUERTA DEL DESTINO ESTA CERCA");
+                break;
+
+            default:
+                break;
+        }
+    }
 
     private void avisar(String mensaje) {
         aviso = mensaje;
@@ -509,7 +497,7 @@ camaraX = 0;
         }
     }
 
-private void abrirCofre() {
+    private void abrirCofre() {
 
         if (!puedeJugar()) return;
 
@@ -522,7 +510,7 @@ private void abrirCofre() {
         }
     }
 
-@Override
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
@@ -575,7 +563,11 @@ private void abrirCofre() {
             mundo,
             juego.getGestorAliados().getAliado()
         );
-        juego.getGestorProyectiles().dibujar(mundo);
+        renderizadorEntidades.dibujarProyectiles(
+            mundo,
+            juego.getGestorProyectiles()
+                .obtenerVistaProyectiles()
+        );
         renderizadorEntidades.dibujarEnemigo(
             mundo,
             juego.getEnemigos(),
@@ -646,7 +638,7 @@ private void abrirCofre() {
        
     }
 
-private void procesarClicInventario(MouseEvent e) {
+    private void procesarClicInventario(MouseEvent e) {
 
         if (pausado || !juego.estaActivo()) {
             return;
@@ -678,7 +670,7 @@ private void procesarClicInventario(MouseEvent e) {
         }
     }
 
-private boolean clicBoton(MouseEvent e, int y) {
+    private boolean clicBoton(MouseEvent e, int y) {
         return menuJuego.contieneBoton(e.getPoint(), y);
     }
 
@@ -770,8 +762,5 @@ private boolean clicBoton(MouseEvent e, int y) {
         }
     }
 
-    private void centrar(Graphics2D g, String texto, int y) {
-        FontMetrics fm = g.getFontMetrics();
-        g.drawString(texto, (ANCHO - fm.stringWidth(texto)) / 2, y);
-    }
+    
 }

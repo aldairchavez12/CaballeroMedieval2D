@@ -18,7 +18,7 @@ public class GestorCombate {
     private long ultimoAtaqueCaballero;
 
     private final Caballero caballero;
-    private final GestorProyectiles proyectiles;
+    
     private final List<Enemigo> enemigos;
     
 
@@ -28,7 +28,7 @@ public class GestorCombate {
             List<Enemigo> enemigos) {
 
         this.caballero = caballero;
-        this.proyectiles = proyectiles;
+        caballero.configurarLanzador(proyectiles);
         this.enemigos = enemigos;
         
     }
@@ -59,10 +59,7 @@ public class GestorCombate {
             if (objetivo == null) return null;
         }
 
-        boolean ejecutado = caballero.ejecutarAtaque(
-            objetivo,
-            proyectiles
-        );
+        boolean ejecutado = caballero.ejecutarAtaque(objetivo);
 
         if (!ejecutado) return null;
 

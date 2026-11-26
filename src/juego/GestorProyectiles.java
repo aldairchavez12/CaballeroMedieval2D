@@ -6,9 +6,6 @@ import interfaces.Atacable;
 import interfaces.LanzadorProyectiles;
 import items.herramientas.Flecha;
 
-import java.awt.Graphics2D;
-import java.awt.Color;
-import java.awt.BasicStroke;
 import java.util.*;
 
 public class GestorProyectiles
@@ -183,38 +180,53 @@ public class GestorProyectiles
             : Math.abs(derecha - anteriorX);
     }
 
-    public void dibujar(Graphics2D original) {
+    
 
-        Graphics2D g = (Graphics2D) original.create();
+    public static final class VistaProyectil {
 
-        try {
+        private final double x;
+        private final double y;
+        private final int direccion;
 
-            g.setColor(new Color(225, 190, 110));
-            g.setStroke(new BasicStroke(3));
+        private VistaProyectil(
+                double x,
+                double y,
+                int direccion) {
 
-            for (Proyectil p : proyectiles) {
-
-                int x = (int) p.x;
-                int y = (int) p.y;
-
-                int atras = x - 15 * p.direccion;
-
-                g.drawLine(atras, y, x, y);
-
-                g.drawLine(
-                    x, y,
-                    x - 6 * p.direccion, y - 4
-                );
-
-                g.drawLine(
-                    x, y,
-                    x - 6 * p.direccion, y + 4
-                );
-            }
-
-        } finally {
-            g.dispose();
+            this.x = x;
+            this.y = y;
+            this.direccion = direccion;
         }
+
+        public double getX() {
+            return x;
+        }
+
+        public double getY() {
+            return y;
+        }
+
+        public int getDireccion() {
+            return direccion;
+        }
+    }
+
+    public List<VistaProyectil> obtenerVistaProyectiles() {
+
+        List<VistaProyectil> vista = new ArrayList<>();
+
+        for (Proyectil p : proyectiles) {
+
+            vista.add(
+                new VistaProyectil(
+                    p.x,
+                    p.y,
+                    p.direccion
+                )
+            );
+        }
+
+        return Collections.unmodifiableList(vista);
     }
 
     public void limpiar() {

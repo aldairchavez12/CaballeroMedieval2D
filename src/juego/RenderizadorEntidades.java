@@ -290,4 +290,49 @@ if (!aliado.estaVivo()) {
         g.setColor(new Color(65, 200, 110));
         g.fillRoundRect(x - 6, y - 22, anchoVida, 5, 3, 3);
     }
+
+    public void dibujarProyectiles(
+            Graphics2D original,
+            List<GestorProyectiles.VistaProyectil> proyectiles) {
+
+        Graphics2D g =
+            (Graphics2D) original.create();
+
+        try {
+
+            g.setColor(new Color(225, 190, 110));
+            g.setStroke(new BasicStroke(3));
+
+            for (GestorProyectiles.VistaProyectil p
+                    : proyectiles) {
+
+                int x = (int) p.getX();
+                int y = (int) p.getY();
+
+                int direccion = p.getDireccion();
+                int atras = x - 15 * direccion;
+
+                // Cuerpo de la flecha
+                g.drawLine(atras, y, x, y);
+
+                // Punta superior
+                g.drawLine(
+                    x, y,
+                    x - 6 * direccion,
+                    y - 4
+                );
+
+                // Punta inferior
+                g.drawLine(
+                    x, y,
+                    x - 6 * direccion,
+                    y + 4
+                );
+            }
+
+        } finally {
+
+            g.dispose();
+        }
+    }
 }
