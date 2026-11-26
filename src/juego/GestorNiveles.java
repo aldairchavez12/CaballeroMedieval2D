@@ -18,7 +18,7 @@ import entidades.Entidad;
 import entidades.Enemigo;
 
 import java.util.List;
-import java.util.Map;
+
 
 public class GestorNiveles {
 
@@ -61,9 +61,7 @@ public class GestorNiveles {
         return total;
     }
 
-    
-
-    private final List<Cofre> cofres = new ArrayList<>();
+private final List<Cofre> cofres = new ArrayList<>();
 
     private final Random azarCofres = new Random();
 
@@ -140,9 +138,7 @@ public class GestorNiveles {
         return cercano;
     }
 
-    
-
-    private final DatosJuego datos;
+private final DatosJuego datos;
 
     public GestorNiveles(DatosJuego datos) {
         this.datos = datos;
@@ -152,14 +148,13 @@ public class GestorNiveles {
     public Enemigo cargarCapitulo(
             int numeroCapitulo,
             List<Entidad> entidades,
-            List<Enemigo> enemigos,
-            Map<Enemigo, Integer> posiciones) {
+            List<Enemigo> enemigos) {
 
         // Eliminar enemigos del capitulo anterior
         entidades.removeIf(e -> e instanceof Enemigo);
 
         enemigos.clear();
-        posiciones.clear();
+        
 
         JsonObject nivel = datos.obtenerNivel(numeroCapitulo);
 
@@ -183,7 +178,7 @@ public class GestorNiveles {
 
             enemigos.add(nuevo);
             entidades.add(nuevo);
-            posiciones.put(nuevo, posicionX);
+            nuevo.establecerPosicion(posicionX);
         }
 
         System.out.println(

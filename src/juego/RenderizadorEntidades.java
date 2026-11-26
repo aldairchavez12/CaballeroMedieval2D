@@ -3,7 +3,7 @@ package juego;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.util.List;
-import java.util.function.ToIntFunction;
+
 
 import entidades.*;
 import items.herramientas.*;
@@ -200,13 +200,12 @@ if (efectoAtaque > 0 && partidaActiva) {
 public void dibujarEnemigo(
             Graphics2D g,
             List<Enemigo> enemigos,
-            ToIntFunction<Enemigo> obtenerPosicion,
             int enemigoY,
             int cap,
             int camaraX) {
         for (Enemigo enemigo : enemigos) {
             if (!enemigo.estaVivo()) continue;
-            int x = obtenerPosicion.applyAsInt(enemigo);
+            int x = enemigo.getX();
             if (x < camaraX - 100 || x > camaraX + ANCHO + 100) continue;
             int y = enemigoY;
             boolean jefe = enemigo instanceof Boss;
@@ -244,9 +243,7 @@ public void dibujarEnemigo(
             Graphics2D g,
             Aliado aliado) {
 
-        
-
-        if (!aliado.estaVivo()) {
+if (!aliado.estaVivo()) {
             return;
         }
 

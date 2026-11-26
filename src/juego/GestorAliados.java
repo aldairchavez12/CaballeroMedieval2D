@@ -6,7 +6,7 @@ import entidades.Caballero;
 import entidades.Enemigo;
 
 import java.util.List;
-import java.util.function.ToIntFunction;
+
 
 public class GestorAliados {
 
@@ -30,8 +30,7 @@ public class GestorAliados {
 
     public void actualizar(
             Caballero caballero,
-            List<Enemigo> enemigos,
-            ToIntFunction<Enemigo> obtenerPosicion) {
+            List<Enemigo> enemigos) {
 
         if (!aliado.estaVivo()) {
             return;
@@ -50,7 +49,7 @@ public class GestorAliados {
                 continue;
             }
 
-            int xEnemigo = obtenerPosicion.applyAsInt(enemigo);
+            int xEnemigo = enemigo.getX();
 
             int distancia = Math.abs(
                 aliado.getX() - xEnemigo

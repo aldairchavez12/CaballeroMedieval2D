@@ -24,7 +24,7 @@ public class GestorEnemigos {
 
     private final Caballero caballero;
     private final List<Enemigo> enemigos;
-    private final Map<Enemigo, Integer> posiciones;
+    
     private static final int DISTANCIA_PERDIDA = 450;
     private static final int DISTANCIA_MAX_PERSECUCION = 400;
 
@@ -42,12 +42,11 @@ public class GestorEnemigos {
 
     public GestorEnemigos(
             Caballero caballero,
-            List<Enemigo> enemigos,
-            Map<Enemigo, Integer> posiciones) {
+            List<Enemigo> enemigos) {
 
         this.caballero = caballero;
         this.enemigos = enemigos;
-        this.posiciones = posiciones;
+        
     }
 
     public void actualizar() {
@@ -66,15 +65,9 @@ public class GestorEnemigos {
         }
     }
 
-    
-   
-    
-    private void actualizarEnemigo(Enemigo enemigo) {
+private void actualizarEnemigo(Enemigo enemigo) {
 
-        Integer posicion = posiciones.get(enemigo);
-        if (posicion == null) return;
-
-        int x = posicion;
+        int x = enemigo.getX();
 
         int centroCaballero =
                 caballero.getX() + Caballero.ANCHO / 2;
@@ -145,18 +138,20 @@ public class GestorEnemigos {
         }
 
         enemigo.prepararMovimiento(
-            x,
             movimiento,
             Juego.ANCHO_NIVEL - ANCHO_ENEMIGO
         );
 
         enemigo.update();
 
+        distancia = Math.abs(
+            centroCaballero
+            - (enemigo.getX() + ANCHO_ENEMIGO / 2)
+        );
+
         x = enemigo.getX();
 
-        posiciones.put(enemigo, x);
-
-        boolean alturaCompatible =
+boolean alturaCompatible =
                 Math.abs(caballero.getY() - ENEMIGO_Y) < 55;
 
         // Atacar manteniendo cierta separacion.

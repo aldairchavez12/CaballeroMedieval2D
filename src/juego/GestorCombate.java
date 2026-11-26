@@ -4,7 +4,7 @@ import entidades.Caballero;
 import entidades.Enemigo;
 import escenario.Estructura;
 import interfaces.Atacable;
-import items.Inventario;
+
 
 import java.util.*;
 
@@ -20,19 +20,17 @@ public class GestorCombate {
     private final Caballero caballero;
     private final GestorProyectiles proyectiles;
     private final List<Enemigo> enemigos;
-    private final Map<Enemigo, Integer> posiciones;
+    
 
     public GestorCombate(
             Caballero caballero,
-            Inventario inventario,
             GestorProyectiles proyectiles,
-            List<Enemigo> enemigos,
-            Map<Enemigo, Integer> posiciones) {
+            List<Enemigo> enemigos) {
 
         this.caballero = caballero;
         this.proyectiles = proyectiles;
         this.enemigos = enemigos;
-        this.posiciones = posiciones;
+        
     }
 
     public Enemigo atacar() {
@@ -87,9 +85,7 @@ public class GestorCombate {
 
             if (!enemigo.estaVivo()) continue;
 
-            Integer x = posiciones.get(enemigo);
-
-            if (x == null) continue;
+            int x = enemigo.getX();
 
             int distancia = evaluarDistancia(
                 x, ENEMIGO_Y

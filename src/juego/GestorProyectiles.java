@@ -64,12 +64,10 @@ public class GestorProyectiles
 
     public void actualizar(
             List<Enemigo> enemigos,
-            Map<Enemigo, Integer> posiciones,
             int enemigoY) {
 
         actualizar(
             enemigos,
-            posiciones,
             enemigoY,
             Collections.emptyList()
         );
@@ -77,7 +75,6 @@ public class GestorProyectiles
 
     public void actualizar(
             List<Enemigo> enemigos,
-            Map<Enemigo, Integer> posiciones,
             int enemigoY,
             List<Estructura> estructuras) {
 
@@ -110,9 +107,7 @@ public class GestorProyectiles
 
                 if (!enemigo.estaVivo()) continue;
 
-                Integer x = posiciones.get(enemigo);
-
-                if (x == null) continue;
+                int x = enemigo.getX();
 
                 if (p.y >= enemigoY
                         && p.y <= enemigoY + 70) {

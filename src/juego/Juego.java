@@ -33,33 +33,27 @@ public class Juego {
     private final List<Estructura> estructuras;
     private final Caballero caballero;
     private final List<Enemigo> enemigos = new ArrayList<>();
-    private final Map<Enemigo, Integer> posicionesEnemigos = new IdentityHashMap<>();
+
     private Enemigo enemigo;
     private Estado estado;
     private int capitulo;
-    private int enemigoX;
+
     private static final int ENEMIGO_Y = 550;
     private final CreadorItems creadorItems = new CreadorItems(datos);
-   
 
-
-
-    private Juego() {
+private Juego() {
         entidades = new ArrayList<>();
         estructuras = new ArrayList<>();
         caballero = new Caballero("Caballero de Valdoria", 100, 15, 0, null, null);
         entidades.add(caballero);
         gestorCombate = new GestorCombate(
             caballero,
-            caballero.getInventario(),
             gestorProyectiles,
-            enemigos,
-            posicionesEnemigos
+            enemigos
         );
         gestorEnemigos = new GestorEnemigos(
             caballero,
-            enemigos,
-            posicionesEnemigos
+            enemigos
         );
             
         capitulo = 1;
@@ -99,10 +93,7 @@ public class Juego {
         return gestorAliados;
     }
 
-
-
-
-    private void prepararCapitulo() {
+private void prepararCapitulo() {
 
         gestorNiveles.generarCofres(creadorItems);
         gestorNiveles.generarMonedas();
@@ -128,14 +119,11 @@ public class Juego {
         enemigo = gestorNiveles.cargarCapitulo(
             capitulo,
             entidades,
-            enemigos,
-            posicionesEnemigos
+            enemigos
         );
 
         // Mantener compatibilidad con PanelJuego
-        enemigoX = enemigo == null
-                ? 0
-                : posicionesEnemigos.get(enemigo);
+        
 
         // Reiniciar los sistemas de combate
         gestorCombate.reiniciar();
@@ -146,9 +134,7 @@ public class Juego {
         caballero.cancelarHabilidad();
     }
 
-    
-
-    public Item crearObjeto(String id) {
+public Item crearObjeto(String id) {
         return creadorItems.crear(id);
     }
 
@@ -271,9 +257,7 @@ public class Juego {
         return caballero.getInventario().agregarItem(item);
     }
 
-   
-
-    public boolean usarItem(int indice) {
+public boolean usarItem(int indice) {
 
         if (estado != Estado.JUGANDO) {
             return false;
@@ -326,14 +310,12 @@ public class Juego {
 
         gestorProyectiles.actualizar(
             enemigos,
-            posicionesEnemigos,
             ENEMIGO_Y,
             estructuras
         );
         gestorAliados.actualizar(
             caballero,
-            enemigos,
-            this::getPosicionEnemigo
+            enemigos
         );
     }
     public GestorProyectiles getGestorProyectiles() {
@@ -356,7 +338,7 @@ public class Juego {
 
             enemigo = objetivo;
 
-            enemigoX = posicionesEnemigos.get(objetivo);
+            
         }
     }
 
@@ -406,11 +388,14 @@ public class Juego {
     public int getCapitulo() { return capitulo; }
     public Caballero getCaballero() { return caballero; }
     public Enemigo getEnemigo() { return enemigo; }
-    public int getEnemigoX() { return enemigoX; }
+    public int getEnemigoX() {
+        return enemigo == null ? 0 : enemigo.getX();
+    }
     public int getEnemigoY() { return ENEMIGO_Y; }
     // Consultas adicionales para representar el nivel sin modificar Entidad/Enemigo/Boss.
     public List<Enemigo> getEnemigos() { return Collections.unmodifiableList(enemigos); }
-    public int getPosicionEnemigo(Enemigo e) { return posicionesEnemigos.getOrDefault(e, -100); }
+    public int getPosicionEnemigo(Enemigo e) { return e == null || !enemigos.contains(e)
+            ? -100 : e.getX(); }
     public boolean enemigosDerrotados() {
         for (Enemigo e : enemigos) if (e.estaVivo()) return false;
         return true;

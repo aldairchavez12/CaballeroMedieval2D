@@ -579,7 +579,6 @@ private void abrirCofre() {
         renderizadorEntidades.dibujarEnemigo(
             mundo,
             juego.getEnemigos(),
-            juego::getPosicionEnemigo,
             juego.getEnemigoY(),
             juego.getCapitulo(),
             camaraX

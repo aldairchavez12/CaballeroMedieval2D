@@ -20,13 +20,16 @@ public class Enemigo extends Entidad {
         this.velocidad = velocidad;
     }
 
-    public void prepararMovimiento(int posicion,
-                                    int desplazamiento,
-                                    int limiteX) {
+    public void establecerPosicion(int posicion) {
+        this.x = Math.max(0, posicion);
+    }
 
-        this.x = posicion;
+    public void prepararMovimiento(
+            int desplazamiento,
+            int limiteX) {
+
         this.desplazamiento = desplazamiento;
-        this.limiteX = limiteX;
+        this.limiteX = Math.max(0, limiteX);
     }
 
     @Override
@@ -38,6 +41,8 @@ public class Enemigo extends Entidad {
 
     @Override
     public void moverse() {
+
+        if (desplazamiento == 0) return;
 
         x = Math.max(
             0,
