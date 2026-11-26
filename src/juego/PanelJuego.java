@@ -62,7 +62,6 @@ public class PanelJuego extends JPanel {
         setFocusable(true);
         setBackground(Color.BLACK);
         setDoubleBuffered(true);
-        climaActual = APIClient.Clima.LLUVIOSO;
         // Singleton: el constructor de Juego es privado.
         juego = Juego.getInstancia();
         capituloVisual = juego.getCapitulo();
@@ -98,6 +97,7 @@ public class PanelJuego extends JPanel {
         gameLoop = new Timer(16, e -> actualizarPantalla());
         juego.iniciar();
         gameLoop.start();
+        
         apiClient.obtenerClima().thenAccept(clima -> {
 
             SwingUtilities.invokeLater(() -> {
@@ -111,7 +111,9 @@ public class PanelJuego extends JPanel {
                 repaint();
             });
         });
+
     }
+    
 
     private void configurarControles() {
         InputMap input = getInputMap(WHEN_IN_FOCUSED_WINDOW);
@@ -436,6 +438,59 @@ public class PanelJuego extends JPanel {
             }
         }
     }
+
+    private void dibujarAliado(Graphics2D g) {
+
+        Aliado aliado = juego.getGestorAliados().getAliado();
+
+        if (!aliado.estaVivo()) {
+            return;
+        }
+
+        int x = aliado.getX();
+        int y = aliado.getY();
+
+        // Piernas
+        g.setColor(new Color(55, 70, 105));
+        g.fillRect(x + 10, y + 45, 10, 24);
+        g.fillRect(x + 27, y + 45, 10, 24);
+
+        // Cuerpo
+        g.setColor(new Color(45, 115, 160));
+        g.fillRoundRect(x + 5, y + 20, 38, 32, 7, 7);
+
+        // Cinturón
+        g.setColor(new Color(160, 120, 65));
+        g.fillRect(x + 5, y + 43, 38, 6);
+
+        // Cabeza
+        g.setColor(new Color(220, 180, 140));
+        g.fillOval(x + 10, y, 28, 28);
+
+        // Cabello
+        g.setColor(new Color(75, 45, 25));
+        g.fillArc(x + 10, y - 2, 28, 19, 0, 180);
+
+        // Emblema
+        g.setColor(new Color(240, 210, 95));
+        g.fillOval(x + 19, y + 30, 10, 10);
+
+        // Nombre
+        g.setFont(new Font("SansSerif", Font.BOLD, 11));
+        g.setColor(Color.WHITE);
+        g.drawString("ALIADO", x - 2, y - 30);
+
+        // Barra de vida
+        g.setColor(new Color(65, 65, 65));
+        g.fillRoundRect(x - 7, y - 23, 62, 7, 4, 4);
+
+        int anchoVida = 60 * aliado.getVida()
+                / aliado.getVidaMaxima();
+
+        g.setColor(new Color(65, 200, 110));
+        g.fillRoundRect(x - 6, y - 22, anchoVida, 5, 3, 3);
+    }
+
     private void dibujarIconoItem(Graphics2D g, Item item, int x, int y) {
         if (item instanceof Espada) {
             dibujarIconoEspada(g, x, y);
@@ -763,9 +818,11 @@ public class PanelJuego extends JPanel {
         dibujarCaballero(graficoCaballero);
 
         graficoCaballero.dispose();
+        dibujarAliado(mundo);
         juego.getGestorProyectiles().dibujar(mundo);
         dibujarEnemigo(mundo);
         mundo.dispose();
+        dibujarClima(g2);
         
         dibujarHUD(g2);
         dibujarHotbar(g2);
@@ -871,14 +928,7 @@ public class PanelJuego extends JPanel {
                 g.fillPolygon(new int[]{x+10,x+49,x+88}, new int[]{390,325,390}, 3);
             }
         }
-        if (cap == 2) {
-            for (int i = 0; i < lluviaX.length; i++) {
-                int x = (lluviaX[i] + fotograma * 3) % ANCHO;
-                int y = (lluviaY[i] + fotograma * 8) % ALTO;
-                g.setColor(new Color(185, 202, 229, 95));
-                g.drawLine(x, y, x - 9, y + 22);
-            }
-        }
+        
     }
 
     private void dibujarEscenario(Graphics2D g) {
@@ -1272,6 +1322,18 @@ public class PanelJuego extends JPanel {
             g.fillRoundRect((ANCHO - w) / 2, 100, w, 48, 14, 14);
             g.setColor(new Color(251, 218, 116));
             g.drawString(aviso, (ANCHO - g.getFontMetrics().stringWidth(aviso)) / 2, 131);
+        }
+        if (juego.getCaballero().tieneFuriaActiva()) {
+
+            g.setColor(new Color(230, 80, 60));
+            g.setFont(new Font("SansSerif", Font.BOLD, 16));
+
+            g.drawString(
+                "FURIA ACTIVA +"
+                + juego.getCaballero().getBonoAtaque(),
+                35,
+                165
+            );
         }
     }
 
