@@ -24,7 +24,9 @@ public interface AtaqueStrategy {
                 return;
             }
 
-            objetivo.recibirDanio(DANIO_PUNOS);
+            objetivo.recibirDanio(
+                DANIO_PUNOS + caballero.getBonoAtaque()
+            );   
         }
 
         @Override
@@ -50,7 +52,9 @@ public interface AtaqueStrategy {
                 return;
             }
 
-            objetivo.recibirDanio(espada.getDanio());
+            objetivo.recibirDanio(
+                espada.getDanio() + c.getBonoAtaque()
+            );            
             espada.usar(c);
         }
 
@@ -76,7 +80,7 @@ public interface AtaqueStrategy {
                 return;
             }
 
-            objetivo.recibirDanio(arco.getDanioBase());
+            // El danio se aplica cuando la flecha impacta.
             arco.disparar(objetivo);
         }
 

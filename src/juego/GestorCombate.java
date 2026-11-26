@@ -166,7 +166,7 @@ public class GestorCombate {
             municion
         );
 
-        arco.reducirDurabilidad(1);
+        arco.disparar(null);
 
         if (municion.getCantidad() == 0) {
             inventario.eliminarItem(municion);
