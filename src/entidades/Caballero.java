@@ -1,10 +1,13 @@
 package entidades;
 
 import interfaces.*;
+import items.Inventario;
 import items.herramientas.*;
 import juego.Juego;
 
 public class Caballero extends Entidad {
+    private int bonoAtaque = 0;
+    private int duracionHabilidad = 0;
     private int experiencia;
     private Herramienta arma;
     private Herramienta defensa;
@@ -22,6 +25,7 @@ public class Caballero extends Entidad {
     private Escudo escudoEquipado;
     private boolean mirandoDerecha = true;
     private AtaqueStrategy estrategiaAtaque = new AtaqueStrategy.Basico();
+    private final Inventario inventario = new Inventario(12);
     public Caballero(String nombre, int vida, int ataqueBase, int experiencia, Herramienta arma, Herramienta defensa) {
         super(nombre, vida, ataqueBase);
         this.experiencia = experiencia;
@@ -35,6 +39,48 @@ public class Caballero extends Entidad {
         this.arma = null;
         this.estrategiaAtaque = new AtaqueStrategy.Basico();
     }
+
+    public void activarFuria(int poder, int duracion) {
+
+        if (poder <= 0 || duracion <= 0) {
+            return;
+        }
+
+        bonoAtaque = poder;
+        duracionHabilidad = duracion;
+
+        System.out.println(
+            "Furia activada: +" + poder + " de ataque"
+        );
+    }
+
+    public void actualizarHabilidad() {
+
+        if (duracionHabilidad <= 0) {
+            return;
+        }
+
+        duracionHabilidad--;
+
+        if (duracionHabilidad == 0) {
+            bonoAtaque = 0;
+            System.out.println("Furia finalizada");
+        }
+    }
+
+    public void cancelarHabilidad() {
+        bonoAtaque = 0;
+        duracionHabilidad = 0;
+    }
+
+    public int getBonoAtaque() {
+        return bonoAtaque;
+    }
+
+    public boolean tieneFuriaActiva() {
+        return duracionHabilidad > 0;
+    }
+
 
     @Override
     public void update() {
@@ -162,7 +208,9 @@ public class Caballero extends Entidad {
         super.recibirDanio(restante);
         
     }
-
+    public Inventario getInventario() {
+        return inventario;
+    }
 
     public int getX() { return x; }
     public int getY() { return y; }

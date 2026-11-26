@@ -2,6 +2,7 @@
 package juego;
 
 import entidades.*;
+import escenario.Estructura;
 import items.*;
 import items.herramientas.*;
 import java.util.*;
@@ -38,6 +39,10 @@ public class GestorCombate {
     }
 
     public Enemigo atacar() {
+        return atacar(Collections.emptyList());
+    }
+
+    public Enemigo atacar(List<Estructura> estructuras) {
 
         if (!caballero.estaVivo()) {
             return null;
@@ -68,6 +73,40 @@ public class GestorCombate {
         }
 
         Enemigo objetivo = buscarObjetivo();
+
+        if (objetivo == null) {
+
+            for (Estructura estructura : estructuras) {
+
+                if (estructura.estaDestruida()) {
+                    continue;
+                }
+
+                int diferencia =
+                    estructura.getX() + 22
+                    - caballero.getX()
+                    - Caballero.ANCHO / 2;
+
+                boolean delante = caballero.miraDerecha()
+                    ? diferencia >= 0
+                    : diferencia <= 0;
+
+                boolean alturaCompatible =
+                    Math.abs(caballero.getY()
+                    - estructura.getY()) < 60;
+
+                if (delante && alturaCompatible
+                        && Math.abs(diferencia)
+                        <= caballero.getAlcanceAtaque()) {
+
+                    caballero.atacar(estructura);
+
+                    ultimoAtaqueCaballero = ahora;
+
+                    return null;
+                }
+            }
+        }
 
         if (objetivo == null) {
             return null;

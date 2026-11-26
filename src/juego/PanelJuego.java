@@ -1,6 +1,7 @@
 package juego;
 
 import entidades.*;
+import escenario.Estructura;
 import items.*;
 import items.consumibles.*;
 import items.herramientas.*;
@@ -35,6 +36,7 @@ public class PanelJuego extends JPanel {
     private boolean izquierda;
     private boolean derecha;
     private boolean pausado;
+    private boolean mostrarControles;
     private int fotograma;
     private int capituloVisual;
     private int camaraX;
@@ -42,7 +44,16 @@ public class PanelJuego extends JPanel {
     private int monedas;
     private final boolean[] monedasRecogidas = new boolean[TOTAL_MONEDAS];
     private final int[][] posicionesMonedas = {{320,565}, {950,565}, {1700,565}, {2540,565}, {3450,565}, {4450,565}};
-    private boolean cofreAbierto;
+    private final Random azarCofres = new Random();
+
+    private final int[] posicionesCofres =
+        new int[8];
+
+    private final boolean[] cofresAbiertos =
+        new boolean[8];
+
+    private final String[] botinCofres =
+        new String[8];
     private int avisoDuracion;
     private String aviso = "";
     private int efectoAtaque;
@@ -50,9 +61,12 @@ public class PanelJuego extends JPanel {
     private int efectoDanio;
     private int enemigoVidaAnterior;
     private final Random efectos = new Random(2026);
-    private final int[] lluviaX = new int[75];
-    private final int[] lluviaY = new int[75];
+
+
     private final APIClient apiClient = new APIClient();
+
+    private final RenderizadorClima renderizadorClima =
+        new RenderizadorClima(ANCHO, ALTO);
 
     private APIClient.Clima climaActual =
             APIClient.Clima.NUBLADO;
@@ -88,11 +102,9 @@ public class PanelJuego extends JPanel {
             repaint();
         });
 
-        for (int i = 0; i < lluviaX.length; i++) {
-            lluviaX[i] = efectos.nextInt(ANCHO);
-            lluviaY[i] = efectos.nextInt(ALTO);
-        }
+        
 
+        generarCofres();
         configurarControles();
         gameLoop = new Timer(16, e -> actualizarPantalla());
         juego.iniciar();
@@ -151,7 +163,7 @@ public class PanelJuego extends JPanel {
                     monedasRecogidas[i] = false;
                 }
 
-                cofreAbierto = false;
+                generarCofres();
                 monedas = 0;
 
                 camaraX = 0;
@@ -231,6 +243,40 @@ public class PanelJuego extends JPanel {
             }
         });
         
+        input.put(
+            KeyStroke.getKeyStroke("pressed H"),
+            "comprarCuracion"
+        );
+
+        acciones.put("comprarCuracion", new AbstractAction() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                if (pausado || !juego.estaActivo()) {
+                    return;
+                }
+
+                Caballero c = juego.getCaballero();
+
+                if (c.getVida() >= c.getVidaMaxima()) {
+                    avisar("YA TIENES TODA LA VIDA");
+                    return;
+                }
+
+                if (monedas < 5) {
+                    avisar("NECESITAS 5 MONEDAS");
+                    return;
+                }
+
+                monedas -= 5;
+                c.curar(40);
+
+                avisar("CURACION: -5 MONEDAS");
+                repaint();
+            }
+        });
+
         acciones.put("pausar", new AbstractAction() {
 
             @Override
@@ -325,6 +371,11 @@ public class PanelJuego extends JPanel {
         @Override
         public void mousePressed(MouseEvent e) {
 
+            if (procesarClicMenu(e)) {
+                return;
+            }
+
+
             if (pausado || !juego.estaActivo()) {
                 return;
             }
@@ -358,7 +409,7 @@ public class PanelJuego extends JPanel {
         if (juego.getCapitulo() != capituloVisual) {
             capituloVisual = juego.getCapitulo();
             for (int i = 0; i < monedasRecogidas.length; i++) monedasRecogidas[i] = false;
-            cofreAbierto = false;
+            generarCofres();
             camaraX = 0;
             zonaVisual = -1;
             avisar("NUEVO CAPITULO: " + capituloVisual);
@@ -421,21 +472,87 @@ public class PanelJuego extends JPanel {
         }
     }
 
-    private void abrirCofre() {
-        if (pausado || !juego.estaActivo() || cofreAbierto) return;
-        Caballero c = juego.getCaballero();
-        Rectangle jugador = new Rectangle(c.getX(), c.getY(), Caballero.ANCHO, Caballero.ALTO);
-        Rectangle cofre = new Rectangle(2770, 556, 75, 54);
-        if (jugador.intersects(new Rectangle(cofre.x - 35, cofre.y - 35, cofre.width + 70, cofre.height + 45))) {
-           Pocima pocima = juego.crearPocimaVida();
+    private void generarCofres() {
 
-            if (juego.recogerItem(pocima)) {
-                cofreAbierto = true;
-                monedas += 5;
-                avisar("OBTUVISTE UNA POCIMA Y 5 MONEDAS");
+        String[] botin = {
+            "espada_basica",
+            "arco_basico",
+            "flecha_basica",
+            "escudo_basico",
+            "armadura_basica",
+            "pocima_vida",
+            "comida_manzana",
+            "habilidad_furia"
+        };
+
+        // Barajar el contenido de los cofres
+        for (int i = botin.length - 1; i > 0; i--) {
+            int j = azarCofres.nextInt(i + 1);
+            String temporal = botin[i];
+            botin[i] = botin[j];
+            botin[j] = temporal;
+        }
+
+        // Garantizar una espada antes del primer enemigo
+        for (int i = 0; i < botin.length; i++) {
+
+            if ("espada_basica".equals(botin[i])) {
+                String temporal = botin[0];
+                botin[0] = botin[i];
+                botin[i] = temporal;
+                break;
+            }
+        }
+
+        for (int i = 0; i < posicionesCofres.length; i++) {
+
+            posicionesCofres[i] =
+                200 + i * 550 + azarCofres.nextInt(100);
+
+            cofresAbiertos[i] = false;
+            botinCofres[i] = botin[i];
+        }
+    }
+
+    private void abrirCofre() {
+
+        if (pausado || !juego.estaActivo()) {
+            return;
+        }
+
+        Caballero c = juego.getCaballero();
+
+        for (int i = 0; i < posicionesCofres.length; i++) {
+
+            if (cofresAbiertos[i]) {
+                continue;
+            }
+
+            if (Math.abs(c.getX()
+                    - posicionesCofres[i]) > 100) {
+                continue;
+            }
+
+            if (Math.abs(c.getY() - 550) > 80) {
+                continue;
+            }
+
+            Item premio =
+                juego.crearObjeto(botinCofres[i]);
+
+            if (juego.recogerItem(premio)) {
+
+                cofresAbiertos[i] = true;
+                monedas += 2;
+
+                avisar("OBTUVISTE: "
+                    + premio.getNombre());
+
             } else {
                 avisar("INVENTARIO LLENO");
             }
+
+            return;
         }
     }
 
@@ -683,18 +800,23 @@ public class PanelJuego extends JPanel {
 
     private void dibujarHotbar(Graphics2D g) {
 
-        int tamano = 44;
-        int separacion = 4;
+        int tamano = 52;
+        int separacion = 5;
+
         int total = SLOTS_HOTBAR * (tamano + separacion)
-                - separacion;
+                    - separacion;
 
         int inicioX = (ANCHO - total) / 2;
-        int inicioY = ALTO - 62;
+        int inicioY = ALTO - 65;
 
-        List<Item> objetos = juego.getInventario()
-                .obtenerItems();
+        List<Item> objetos =
+            juego.getInventario().obtenerItems();
 
-        g.setFont(new Font("SansSerif", Font.BOLD, 12));
+        g.setColor(new Color(8, 10, 18, 210));
+        g.fillRoundRect(
+            inicioX - 10, inicioY - 8,
+            total + 20, tamano + 16, 12, 12
+        );
 
         for (int i = 0; i < SLOTS_HOTBAR; i++) {
 
@@ -703,99 +825,129 @@ public class PanelJuego extends JPanel {
 
             boolean seleccionado = i == slotSeleccionado;
 
-            g.setColor(new Color(22, 25, 36, 225));
-            g.fillRoundRect(x, y, tamano, tamano, 8, 8);
+            g.setColor(new Color(40, 44, 57));
+            g.fillRect(x, y, tamano, tamano);
 
-            g.setStroke(new BasicStroke(seleccionado ? 3 : 1));
+            g.setColor(new Color(70, 75, 90));
+            g.fillRect(x + 2, y + 2, tamano - 4, 2);
 
-            g.setColor(
-                seleccionado
-                    ? new Color(255, 210, 90)
-                    : new Color(135, 140, 155)
-            );
+            g.setStroke(new BasicStroke(
+                seleccionado ? 3 : 1
+            ));
 
-            g.drawRoundRect(x, y, tamano, tamano, 8, 8);
+            g.setColor(seleccionado
+                ? new Color(255, 210, 90)
+                : new Color(115, 120, 135));
 
-            g.setColor(Color.LIGHT_GRAY);
-            g.drawString(String.valueOf(i + 1), x + 5, y + 13);
+            g.drawRect(x, y, tamano, tamano);
+
+            g.setStroke(new BasicStroke(1));
 
             if (i < objetos.size()) {
 
                 Item item = objetos.get(i);
-                String nombre = item.getNombre();
 
-                String icono = "?";
+                Graphics2D icono =
+                    (Graphics2D) g.create();
 
-                String tipo = item.getClass().getSimpleName();
-                dibujarIconoItem(g, item, x + 12, y + 12);
-                switch (tipo) {
-                    case "Espada": icono = ""; break;
-                    case "Arco": icono = ""; break;
-                    case "Flecha": icono = ""; break;
-                    case "Escudo": icono = ""; break;
-                    case "Armadura": icono = ""; break;
-                    case "Pocima": icono = ""; break;
-                    case "Comida": icono = ""; break;
-                    case "Habilidad": icono = ""; break;
+                try {
+
+                    icono.clipRect(
+                        x + 4, y + 10,
+                        tamano - 8, tamano - 19
+                    );
+
+                    icono.translate(x + 11, y + 10);
+                    icono.scale(0.75, 0.75);
+
+                    dibujarIconoItem(
+                        icono, item, 0, 0
+                    );
+
+                } finally {
+                    icono.dispose();
                 }
 
-                g.setColor(new Color(245, 216, 150));
-                g.setFont(new Font("SansSerif", Font.BOLD, 27));
-
-                FontMetrics fm = g.getFontMetrics();
-                g.drawString(
-                    icono,
-                    x + (tamano - fm.stringWidth(icono)) / 2,
-                    y + 39
-                );
-
-                g.setFont(new Font("SansSerif", Font.BOLD, 12));
                 if (item instanceof Herramienta) {
 
-                Herramienta herramienta = (Herramienta) item;
+                    Herramienta h =
+                        (Herramienta) item;
 
-                g.setColor(Color.WHITE);
-                g.setFont(new Font("SansSerif", Font.BOLD, 11));
+                    double porcentaje = Math.max(
+                        0, Math.min(1,
+                            (double) h.getDurabilidad()
+                            / Math.max(1,
+                                h.getDurabilidadMaxima())
+                        )
+                    );
 
-                g.drawString(
-                    "D:" + herramienta.getDurabilidad(),
-                    x + 5,
-                    y + tamano - 5
-                );
+                    g.setColor(Color.BLACK);
+                    g.fillRect(x + 6, y + 43, 40, 5);
+
+                    g.setColor(Color.getHSBColor(
+                        (float) (porcentaje / 3.0),
+                        0.85f, 0.95f
+                    ));
+
+                    g.fillRect(
+                        x + 7, y + 44,
+                        (int) (38 * porcentaje), 3
+                    );
+
+                } else {
+
+                    int cantidad = 1;
+
+                    if (item instanceof Flecha) {
+                        cantidad =
+                            ((Flecha) item).getCantidad();
+                    }
+
+                    if (item instanceof Consumible) {
+                        cantidad =
+                            ((Consumible) item).getCantidad();
+                    }
+
+                    String texto =
+                        String.valueOf(cantidad);
+
+                    g.setFont(new Font(
+                        "SansSerif", Font.BOLD, 12
+                    ));
+
+                    int tx = x + tamano - 5
+                        - g.getFontMetrics()
+                            .stringWidth(texto);
+
+                    g.setColor(Color.BLACK);
+                    g.drawString(texto, tx + 1, y + 48);
+
+                    g.setColor(Color.WHITE);
+                    g.drawString(texto, tx, y + 47);
+                }
             }
 
-            if (item instanceof Flecha) {
+            g.setFont(new Font(
+                "SansSerif", Font.BOLD, 10
+            ));
 
-                Flecha flecha = (Flecha) item;
-
-                g.setColor(Color.WHITE);
-                g.setFont(new Font("SansSerif", Font.BOLD, 11));
-
-                g.drawString(
-                    "x" + flecha.getCantidad(),
-                    x + 5,
-                    y + tamano - 5
-                );
-            }
-            
-            }
+            g.setColor(Color.LIGHT_GRAY);
+            g.drawString(
+                String.valueOf(i + 1), x + 4, y + 11
+            );
         }
-
-        g.setStroke(new BasicStroke(1));
 
         if (slotSeleccionado < objetos.size()) {
 
-            Item seleccionado = objetos.get(slotSeleccionado);
-
-            String nombre = seleccionado.getNombre();
-
-            g.setFont(new Font("SansSerif", Font.BOLD, 15));
-            FontMetrics fm = g.getFontMetrics();
-
-            int textoX = (ANCHO - fm.stringWidth(nombre)) / 2;
-
             g.setColor(new Color(255, 230, 165));
-            g.drawString(nombre, textoX, inicioY - 12);
+            g.setFont(new Font(
+                "SansSerif", Font.BOLD, 15
+            ));
+
+            centrar(g,
+                objetos.get(slotSeleccionado).getNombre(),
+                inicioY - 16
+            );
         }
     }
 
@@ -810,6 +962,7 @@ public class PanelJuego extends JPanel {
         Graphics2D mundo = (Graphics2D) g2.create();
         mundo.translate(-camaraX, 0);
         dibujarEscenario(mundo);
+        dibujarEstructuras(mundo);
         dibujarMonedas(mundo);
         dibujarCofre(mundo);
         dibujarMeta(mundo);
@@ -822,7 +975,7 @@ public class PanelJuego extends JPanel {
         juego.getGestorProyectiles().dibujar(mundo);
         dibujarEnemigo(mundo);
         mundo.dispose();
-        dibujarClima(g2);
+        renderizadorClima.dibujar(g2, climaActual, fotograma);
         
         dibujarHUD(g2);
         dibujarHotbar(g2);
@@ -832,6 +985,10 @@ public class PanelJuego extends JPanel {
             g2.fillRect(0, 0, ANCHO, ALTO);
         }
         if (pausado) dibujarPausa(g2);
+
+        if (juego.getEstado() == Juego.Estado.DERROTA) {
+            dibujarMenuDerrota(g2);
+        }
         g2.dispose();
        
     }
@@ -931,6 +1088,36 @@ public class PanelJuego extends JPanel {
         
     }
 
+    private void dibujarEstructuras(Graphics2D g) {
+
+        for (Estructura e : juego.getEstructuras()) {
+
+            if (e.estaDestruida()) {
+                continue;
+            }
+
+            int x = e.getX();
+            int y = e.getY();
+
+            g.setColor(new Color(125, 80, 45));
+            g.fillRect(x, y, 45, 620 - y);
+
+            g.setColor(new Color(70, 40, 25));
+            g.drawRect(x, y, 45, 620 - y);
+            g.drawLine(x, y, x + 45, 620);
+            g.drawLine(x + 45, y, x, 620);
+
+            g.setColor(Color.DARK_GRAY);
+            g.fillRect(x, y - 12, 45, 6);
+
+            int anchoVida = 45 * e.getResistencia()
+                / Math.max(1, e.getResistenciaMaxima());
+
+            g.setColor(Color.GREEN);
+            g.fillRect(x, y - 12, anchoVida, 6);
+        }
+    }
+
     private void dibujarEscenario(Graphics2D g) {
         int cap = juego.getCapitulo();
         g.setColor(new Color(35, 39, 54));
@@ -1003,18 +1190,41 @@ public class PanelJuego extends JPanel {
     }
 
     private void dibujarCofre(Graphics2D g) {
-        int x = 2770, y = 556;
-        g.setColor(new Color(68, 39, 29));
-        g.fillRoundRect(x, y + 9, 75, 54, 8, 8);
-        g.setColor(cofreAbierto ? new Color(99, 72, 39) : new Color(178, 94, 43));
-        g.fillRoundRect(x + 5, y + (cofreAbierto ? -19 : 1), 65, 39, 8, 8);
-        g.setColor(new Color(246, 189, 58));
-        g.fillRect(x, y + 39, 75, 7);
-        g.fillRect(x + 29, y + (cofreAbierto ? -14 : 12), 14, 27);
-        if (!cofreAbierto && juego.estaActivo() && !pausado) {
-            Caballero c = juego.getCaballero();
-            if (Math.abs(c.getX() - x) < 115) {
-                dibujarBurbuja(g, "E  ABRIR COFRE", x - 15, 495);
+
+        for (int i = 0; i < posicionesCofres.length; i++) {
+
+            int x = posicionesCofres[i];
+            int y = 580;
+
+            boolean abierto = cofresAbiertos[i];
+
+            g.setColor(new Color(55, 30, 18));
+            g.fillRoundRect(x, y, 58, 40, 6, 6);
+
+            g.setColor(new Color(155, 91, 40));
+            g.fillRect(x + 4, y + 12, 50, 24);
+
+            g.setColor(new Color(190, 125, 55));
+            g.fillRoundRect(
+                x, abierto ? y - 12 : y,
+                58, 17, 5, 5
+            );
+
+            g.setColor(new Color(240, 190, 65));
+            g.fillRect(x, y + 18, 58, 4);
+            g.fillRect(x + 24, y + 13, 10, 14);
+
+            g.setColor(Color.BLACK);
+            g.fillRect(x + 28, y + 17, 3, 5);
+
+            if (!abierto && juego.estaActivo()
+                    && !pausado
+                    && Math.abs(juego.getCaballero().getX()
+                        - x) < 100) {
+
+                dibujarBurbuja(
+                    g, "E  ABRIR COFRE", x - 55, y - 60
+                );
             }
         }
     }
@@ -1192,43 +1402,7 @@ public class PanelJuego extends JPanel {
         // Restaurar SIEMPRE la transformación gráfica
         g.setTransform(transformacionOriginal);
     }
-    private void dibujarClima(Graphics2D g) {
-
-        switch (climaActual) {
-
-            case LLUVIOSO:
-
-                // Oscurecer ligeramente el escenario
-                g.setColor(new Color(35, 50, 75, 65));
-                g.fillRect(0, 0, ANCHO, ALTO);
-
-                // Gotas de lluvia animadas
-                g.setStroke(new BasicStroke(2));
-
-                for (int i = 0; i < lluviaX.length; i++) {
-
-                    int x = lluviaX[i];
-                    int y = (lluviaY[i] + fotograma * 8) % ALTO;
-
-                    g.setColor(new Color(190, 220, 255, 170));
-                    g.drawLine(x, y, x - 7, y + 18);
-                }
-
-                g.setStroke(new BasicStroke(1));
-                break;
-
-            case NUBLADO:
-
-                // Capa gris semitransparente
-                g.setColor(new Color(55, 65, 85, 75));
-                g.fillRect(0, 0, ANCHO, ALTO);
-                break;
-
-            case SOLEADO:
-                // Sin superposición: conserva los colores del capítulo
-                break;
-        }
-    }
+    
 
 
     private void dibujarEnemigo(Graphics2D g) {
@@ -1289,6 +1463,11 @@ public class PanelJuego extends JPanel {
         g.setColor(Color.WHITE);
         g.setFont(new Font("SansSerif", Font.BOLD, 24));
         g.drawString("x " + monedas, 1140, 55);
+
+        g.setFont(new Font("SansSerif", Font.BOLD, 11));
+        g.setColor(new Color(245, 210, 110));
+        g.drawString("H: CURAR (5 MONEDAS)", 1090, 76);
+        g.setColor(Color.WHITE);
         g.setFont(new Font("SansSerif", Font.BOLD, 13));
         g.drawString("ENEMIGOS: " + juego.getEnemigosRestantes(), 1090, 96);
         g.setColor(new Color(29, 32, 47, 195));
@@ -1310,11 +1489,7 @@ public class PanelJuego extends JPanel {
         String titulo = juego.getTituloCapitulo();
         g.drawString(titulo, (ANCHO - g.getFontMetrics().stringWidth(titulo)) / 2, 51);
 
-        g.setColor(new Color(18, 20, 31, 224));
-        g.fillRoundRect(22, 664, 770, 38, 10, 10);
-        g.setColor(new Color(239, 239, 242));
-        g.setFont(new Font("SansSerif", Font.BOLD, 14));
-        g.drawString("A/D  AVANZAR     ESPACIO  SALTAR     J  ATACAR     E  COFRE     P  PAUSA", 40, 688);
+        
         if (avisoDuracion > 0) {
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
             int w = g.getFontMetrics().stringWidth(aviso) + 50;
@@ -1379,24 +1554,190 @@ public class PanelJuego extends JPanel {
     }
 
     private void dibujarPausa(Graphics2D g) {
-        g.setColor(new Color(7, 10, 21, 205));
+
+        g.setColor(new Color(7, 10, 21, 180));
         g.fillRect(0, 0, ANCHO, ALTO);
-        g.setColor(new Color(30, 35, 54));
-        g.fillRoundRect(320, 173, 640, 370, 22, 22);
+
         g.setColor(new Color(245, 205, 112));
-        g.setStroke(new BasicStroke(3));
-        g.drawRoundRect(320, 173, 640, 370, 22, 22);
-        g.setFont(new Font("SansSerif", Font.BOLD, 40));
-        centrar(g, "PARTIDA EN PAUSA", 242);
+        g.setFont(new Font("SansSerif", Font.BOLD, 36));
+
+        centrar(g, "PARTIDA EN PAUSA", 175);
+
+        if (mostrarControles) {
+
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("SansSerif", Font.PLAIN, 22));
+
+            centrar(g, "A / D - Moverse", 260);
+            centrar(g, "ESPACIO - Saltar", 300);
+            centrar(g, "J / CLIC DERECHO - Atacar", 340);
+            centrar(g, "CLIC IZQUIERDO - Usar objeto", 380);
+            centrar(g, "E - Abrir cofre", 420);
+            centrar(g, "H - Curar por 5 monedas", 455);
+
+            dibujarBotonMenu(g, "VOLVER", 490);
+
+        } else {
+
+            dibujarBotonMenu(g, "REANUDAR PARTIDA", 230);
+            dibujarBotonMenu(g, "REINICIAR CAPITULO", 300);
+            dibujarBotonMenu(g, "CONTROLES", 370);
+            dibujarBotonMenu(g, "SALIR DEL JUEGO", 440);
+        }
+    }
+
+    private void dibujarMenuDerrota(Graphics2D g) {
+
+        g.setColor(new Color(12, 5, 10, 235));
+        g.fillRect(0, 0, ANCHO, ALTO);
+
+        g.setColor(new Color(225, 85, 85));
+        g.setFont(new Font("SansSerif", Font.BOLD, 52));
+
+        centrar(g, "HAS SIDO DERROTADO", 220);
+
         g.setColor(Color.WHITE);
         g.setFont(new Font("SansSerif", Font.PLAIN, 20));
-        centrar(g, "A / D     Moverse", 313);
-        centrar(g, "ESPACIO     Saltar", 350);
-        centrar(g, "J     Atacar", 387);
-        centrar(g, "E     Abrir cofre cercano", 424);
-        g.setColor(new Color(245, 205, 112));
+
+        centrar(g, "Valdoria aun necesita de ti.", 270);
+
+        dibujarBotonMenu(g, "REINTENTAR CAPITULO", 330);
+        dibujarBotonMenu(g, "SALIR DEL JUEGO", 410);
+
+        g.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        g.setColor(Color.LIGHT_GRAY);
+
+        centrar(g, "Tambien puedes presionar R", 520);
+    }
+
+    private void dibujarBotonMenu(Graphics2D g,
+                                  String texto, int y) {
+
+        int ancho = 420;
+        int alto = 54;
+        int x = (ANCHO - ancho) / 2;
+
+        Point raton = getMousePosition();
+
+        boolean encima = raton != null
+            && new Rectangle(x, y, ancho, alto)
+                .contains(raton);
+
+        g.setColor(new Color(0, 0, 0, 150));
+        g.fillRect(x + 4, y + 4, ancho, alto);
+
+        g.setColor(encima
+            ? new Color(90, 100, 125)
+            : new Color(48, 55, 75));
+
+        g.fillRect(x, y, ancho, alto);
+
+        g.setColor(encima
+            ? new Color(255, 220, 130)
+            : new Color(155, 130, 85));
+
+        g.drawRect(x, y, ancho, alto);
+
+        g.setColor(Color.WHITE);
         g.setFont(new Font("SansSerif", Font.BOLD, 19));
-        centrar(g, "P O ENTER PARA CONTINUAR", 488);
+
+        centrar(g, texto, y + 34);
+    }
+
+    private boolean clicBoton(MouseEvent e, int y) {
+
+        return new Rectangle(
+            (ANCHO - 420) / 2,
+            y, 420, 54
+        ).contains(e.getPoint());
+    }
+
+    private boolean procesarClicMenu(MouseEvent e) {
+
+        boolean derrota =
+            juego.getEstado() == Juego.Estado.DERROTA;
+
+        if (!pausado && !derrota) {
+            return false;
+        }
+
+        if (!SwingUtilities.isLeftMouseButton(e)) {
+            return true;
+        }
+
+        if (derrota) {
+
+            if (clicBoton(e, 330)) {
+
+                getActionMap().get("reintentar")
+                    .actionPerformed(
+                        new ActionEvent(this, 0, "reintentar")
+                    );
+
+            } else if (clicBoton(e, 410)) {
+
+                salirDelJuego();
+            }
+
+        } else if (mostrarControles) {
+
+            if (clicBoton(e, 490)) {
+                mostrarControles = false;
+            }
+
+        } else {
+
+            if (clicBoton(e, 230)) {
+
+                pausado = false;
+                mostrarControles = false;
+
+            } else if (clicBoton(e, 300)) {
+
+                int respuesta = JOptionPane.showConfirmDialog(
+                    this,
+                    "Deseas reiniciar el capitulo actual?",
+                    "Reiniciar capitulo",
+                    JOptionPane.YES_NO_OPTION
+                );
+
+                if (respuesta == JOptionPane.YES_OPTION) {
+
+                    juego.finalizar();
+
+                    getActionMap().get("reintentar")
+                        .actionPerformed(
+                            new ActionEvent(this, 0, "reintentar")
+                        );
+                }
+
+            } else if (clicBoton(e, 370)) {
+
+                mostrarControles = true;
+
+            } else if (clicBoton(e, 440)) {
+
+                salirDelJuego();
+            }
+        }
+
+        repaint();
+        return true;
+    }
+
+    private void salirDelJuego() {
+
+        int respuesta = JOptionPane.showConfirmDialog(
+            this,
+            "Deseas salir del videojuego?",
+            "Salir",
+            JOptionPane.YES_NO_OPTION
+        );
+
+        if (respuesta == JOptionPane.YES_OPTION) {
+            gameLoop.stop();
+            System.exit(0);
+        }
     }
 
     private void centrar(Graphics2D g, String texto, int y) {

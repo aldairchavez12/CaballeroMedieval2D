@@ -25,7 +25,6 @@ public class Juego {
         if (instancia == null) instancia = new Juego();
         return instancia;
     }
-    private final Inventario inventario = new Inventario(12);
     private final GestorProyectiles gestorProyectiles = new GestorProyectiles();
     private final GestorAliados gestorAliados =new GestorAliados();
     private final GestorEnemigos gestorEnemigos;
@@ -52,7 +51,7 @@ public class Juego {
         entidades.add(caballero);
         gestorCombate = new GestorCombate(
             caballero,
-            inventario,
+            caballero.getInventario(),
             gestorProyectiles,
             enemigos,
             posicionesEnemigos
@@ -67,20 +66,7 @@ public class Juego {
         estado = Estado.INTRO;
         prepararCapitulo();
         caballero.cancelarHabilidad();
-        String[] objetosIniciales = {
-            "espada_basica",
-            "arco_basico",
-            "escudo_basico",
-            "armadura_basica",
-            "comida_manzana",
-            "pocima_vida",
-            "flecha_basica",
-            "habilidad_furia"
-        };
-
-        for (String id : objetosIniciales) {
-            inventario.agregarItem(creadorItems.crear(id));
-        }
+        
     }
 
     public void iniciar() {
@@ -120,6 +106,16 @@ public class Juego {
         // Limpiar proyectiles del capitulo anterior
         gestorProyectiles.limpiar();
 
+        estructuras.clear();
+
+        estructuras.add(
+            new Estructura("Barricada", 60, 520, 550)
+        );
+
+        estructuras.add(
+            new Estructura("Caja de madera", 40, 1250, 570)
+        );
+
         // Reiniciar posicion del jugador
         caballero.reiniciarPosicion();
 
@@ -147,12 +143,16 @@ public class Juego {
 
     
 
+    public Item crearObjeto(String id) {
+        return creadorItems.crear(id);
+    }
+
     public Inventario getInventario() {
-        return inventario;
+        return caballero.getInventario();
     }
 
     public boolean recogerItem(Item item) {
-        return inventario.agregarItem(item);
+        return caballero.getInventario().agregarItem(item);
     }
 
    
@@ -163,7 +163,7 @@ public class Juego {
             return false;
         }
 
-        List<Item> objetos = inventario.obtenerItems();
+        List<Item> objetos = caballero.getInventario().obtenerItems();
 
         if (indice < 0 || indice >= objetos.size()) {
             return false;
@@ -231,7 +231,7 @@ public class Juego {
             item.usar(caballero);
 
             if (!consumible.disponible()) {
-                inventario.eliminarItem(item);
+                caballero.getInventario().eliminarItem(item);
             }
 
             return true;
@@ -246,11 +246,13 @@ public class Juego {
         if (estado == Estado.INTRO) {
             estado = Estado.JUGANDO;
             System.out.println("Comienza el capitulo " + capitulo);
-        } else if (estado == Estado.ENTRE_CAPITULOS) {
-            capitulo++;
+        } else if (estado == Estado.ENTRE_CAPITULOS
+            && enemigosDerrotados()) {capitulo++;
             prepararCapitulo();
             estado = Estado.INTRO;
         }
+            
+        
     }
 
     public void actualizar() {
@@ -293,13 +295,17 @@ public class Juego {
      return gestorProyectiles;
     }
 
+    public List<Estructura> getEstructuras() {
+        return Collections.unmodifiableList(estructuras);
+    }
+
     public void atacarEnemigo() {
 
         if (estado != Estado.JUGANDO) {
             return;
         }
 
-        Enemigo objetivo = gestorCombate.atacar();
+        Enemigo objetivo = gestorCombate.atacar(estructuras);
 
         if (objetivo != null) {
 
