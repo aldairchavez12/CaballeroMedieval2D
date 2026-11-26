@@ -21,6 +21,17 @@ El jugador controla a un caballero que debe enfrentarse a diferentes enemigos, a
 El reino de Valdoria ha sido invadido por las fuerzas del Señor de las Sombras.
 
 Un caballero emprende una aventura para recuperar la fortaleza y devolver la paz al reino.
+Un caballero emprende una misión para recuperar la fortaleza y restaurar la paz.
+
+La aventura se divide en tres capítulos secuenciales:
+
+| Capítulo | Escenario | Enemigo |
+|---|---|---|
+| I | Bosque de las Sombras | Goblin |
+| II | Fortaleza Abandonada | Guardián Oscuro |
+| III | Trono de la Oscuridad | Señor de las Sombras (Boss) |
+
+Para avanzar al siguiente capítulo, el jugador debe derrotar al enemigo correspondiente.
 
 | Capítulo | Escenario |
 |---|---|
